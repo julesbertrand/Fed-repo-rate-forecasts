@@ -1,0 +1,42 @@
+Peak month,Trough month,Peak month number,Trough month number,"Duration, peak to trough","Duration, trough to peak","Duration, peak to peak","Duration, trough to trough"
+,December 1854,,660,,,,
+June 1857,December 1858,690,708,18,30,,48
+October 1860,June 1861,730,738,8,22,40,30
+April 1865,December 1867,784,816,32,46,54,78
+June 1869,December 1870,834,852,18,18,50,36
+October 1873,March 1879,886,951,65,34,52,99
+March 1882,May 1885,987,1025,38,36,101,74
+March 1887,April 1888,1047,1060,13,22,60,35
+July 1890,May 1891,1087,1097,10,27,40,37
+January 1893,June 1894,1117,1134,17,20,30,37
+December 1895,June 1897,1152,1170,18,18,35,36
+June 1899,December 1900,1194,1212,18,24,42,42
+September 1902,August 1904,1233,1256,23,21,39,44
+May 1907,June 1908,1289,1302,13,33,56,46
+January 1910,January 1912,1321,1345,24,19,32,43
+January 1913,December 1914,1357,1380,23,12,36,35
+August 1918,March 1919,1424,1431,7,44,67,51
+January 1920,July 1921,1441,1459,18,10,17,28
+May 1923,July 1924,1481,1495,14,22,40,36
+October 1926,November 1927,1522,1535,13,27,41,40
+August 1929,March 1933,1556,1599,43,21,34,64
+May 1937,June 1938,1649,1662,13,50,93,63
+February 1945,October 1945,1742,1750,8,80,93,88
+November 1948,October 1949,1787,1798,11,37,45,48
+July 1953,May 1954,1843,1853,10,45,56,55
+August 1957,April 1958,1892,1900,8,39,49,47
+April 1960,February 1961,1924,1934,10,24,32,34
+December 1969,November 1970,2040,2051,11,106,116,117
+November 1973,March 1975,2087,2103,16,36,47,52
+January 1980,July 1980,2161,2167,6,58,74,64
+July 1981,November 1982,2179,2195,16,12,18,28
+July 1990,March 1991,2287,2295,8,92,108,100
+March 2001,November 2001,2415,2423,8,120,128,128
+December 2007,June 2009,2496,2514,18,73,81,91
+,,,,,,,
+1854-2009 (33 cycles),,,,17.5,38.7,56.4,56.2
+1854-1919 (16 cycles),,,,21.6,26.6,48.9,48.2
+1919-1945 (6 cycles),,,,18.2,35.0,53.0,53.2
+1945-2009 (11 cycles),,,,11.1,58.4,68.5,69.5
+,,,,,,,
+Note: Month numbers start in January 1800,,,,,,,
