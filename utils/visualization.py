@@ -28,8 +28,8 @@ units = {
     'OECD_GDP_gth_rate': "Growth rate %",
     'USA_GDP_gth_rate': "Growth rate %",
     'Recession': 'Binary',
-    'US debt share in GDP': "% of GDP",
-    'US debt nominal': "M$",
+    'US_debt_share_in_GDP': "% of GDP",
+    'US_debt_nominal': "M$",
     'USDCNY': 'Fx rate',
     'EURUSD': 'Fx rate',
     'VIX': 'Index',
@@ -40,14 +40,14 @@ units = {
     'trade_balance_All': 'M$',
     'trade_balance_Goods': 'M$',
     'trade_balance_Services': 'M$',
-    'WTI oil price': '$ per barrel',
-    'FF month avg': 'Interest rate',
-    'FF spot EOM': 'Interest rate',
-    'FF growth rate': 'Growth rate %',
-    'FF monthly avg diff': 'nominal change in rate',
-    'FF monthly avg pct change': 'Growth rate %',
-    'FF trend diff': 'categorical: Up, Down, Stable',
-    'FF trend pct change': 'categorical: Up, Down, Stable',
+    'WTI_oil_price': '$ per barrel',
+    'FF_month_avg': 'Interest rate',
+    'FF_spot_EOM': 'Interest rate',
+    'FF_growth_rate': 'Growth rate %',
+    'FF_month_avg_diff': 'nominal change in rate',
+    'FF_month_avg_pct_change': 'Growth rate %',
+    'FF_trend_diff': 'categorical: Up, Down, Stable',
+    'FF_trend_pct_change': 'categorical: Up, Down, Stable',
 }
 
 def visualization_basis(data,
@@ -59,7 +59,8 @@ def visualization_basis(data,
                         ncols=3,
                         height_per_ax=3,
                         width_per_ax=5,
-                        titles=None
+                        subplot_title_complements=None,
+                        fig_title=None
                         ):
     """
     Give a frame for subplots for all features visualization functions
@@ -67,13 +68,26 @@ def visualization_basis(data,
     if columns is None:
         columns = data.columns
     n_excl = len(columns) - len(set(columns) - set(excl_cols) - set([date_col]))  # actual number of excluded columns
-    ncols = min(ncols, len(columns))
+    ncols = min(ncols, len(columns) - n_excl)   
     nrows = ceil((len(columns) - n_excl) / ncols)
-    fig, axs = plt.subplots(nrows=nrows, ncols=ncols, figsize=(ncols * width_per_ax, nrows * height_per_ax))
+    plt.style.use("seaborn-darkgrid")
+    fig, axes = plt.subplots(
+        nrows=nrows,
+        ncols=ncols, 
+        figsize=(ncols * width_per_ax, nrows * height_per_ax)
+    )
     if date_col is not None:
         min_x, max_x = data[date_col].iloc[0], data[date_col].iloc[-1]  # same x_limits for all subplots: with dates
     else:
         min_x, max_x = data.index[0], data.index[-1]  # same x_limits for all subplots: without dates
+    if isinstance(subplot_title_complements, dict):
+        pass
+    elif subplot_title_complements == None:
+        subplot_title_complements = dict(zip(columns, columns))
+    elif isinstance(titles, str):
+        subplot_title_complements = dict(zip(columns, [", " + subplot_title_complements]))
+    elif isinstance(titles, list):
+        subplot_title_complements = dict(zip(columns, [", " + t for t in subplot_title_complements]))
     j = 0  # number of excluded columns count
     for i, col_name in zip(range(len(columns)), columns):
         if col_name in excl_cols or col_name == date_col:  # do not plot excluded columns
@@ -81,26 +95,19 @@ def visualization_basis(data,
             continue
         # choose subplot position
         if ncols == 1 and nrows == 1:
-            ax = axs 
+            ax = axes 
         else:
             idx_row, idx_col = (i - j) // ncols, (i - j) % ncols
             if (ncols == 1) != (nrows == 1):  # XOR operator
-                ax = axs[max(idx_row, idx_col)]
+                ax = axes[max(idx_row, idx_col)]
             else:
-                ax = axs[idx_row, idx_col]
+                ax = axes[idx_row, idx_col]
         # plot on subplot
         subplot_function(ax, col_name, **subplot_params)
         ax.set_xlim(left=min_x, right=max_x)
-        # add title
-        if titles == None:
-            ax.set_title(col_name, size=14)
-        elif isinstance(titles, str):
-            ax.set_title(col_name + ", " + titles, size=14)
-        elif isinstance(titles, dict):
-            ax.set_title(col_name + ", " + titles[col_name], size=14)
-        else:
-            ax.set_title(col_name + ", " + titles[i], size=14)
-    fig.tight_layout()
+        ax.set_title(subplot_title_complements[col_name].replace("_", " "), size=14)
+    fig.suptitle(fig_title, fontsize=18)
+    fig.tight_layout(rect=[0, 0, 1, 0.97])
     plt.show()
 
 
@@ -111,7 +118,7 @@ def visualize_features(data,
                         ncols=3, 
                         height_per_ax=2, 
                         width_per_ax=5, 
-                        titles=None
+                        subplot_title_complements=None
                         ):
     if columns is None:
         columns = data.columns
@@ -129,7 +136,8 @@ def visualize_features(data,
                         ncols=ncols,
                         height_per_ax=height_per_ax,
                         width_per_ax=width_per_ax,
-                        titles=titles
+                        subplot_title_complements=subplot_title_complements,
+                        fig_title="Feature visualization"
                         )
 
 if __name__ == "__main__":

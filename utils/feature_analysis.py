@@ -7,9 +7,10 @@ import seaborn as sns
 
 from statsmodels.tsa.stattools import adfuller  # Dickey-fuller test for stationarity of a series
 from statsmodels.tsa.seasonal import seasonal_decompose  # seasonal decomposition of a signal (trend, seasonal, residuals)
+from statsmodels.stats.outliers_influence import variance_inflation_factor  # VIF analysis
 
 from utils import settings
-from visualization import visualization_basis
+from utils.visualization import visualization_basis
 
 def test_stationarity(data,
                     stat_conf_level='1%',  # at which level of confidence to retain stationarity for Dickey-Fuller test
@@ -20,7 +21,7 @@ def test_stationarity(data,
                     ncols=3, 
                     height_per_ax=4, 
                     width_per_ax=5, 
-                    titles=None,
+                    subplot_title_complements=None,
                     plot_test_results=True,
                     num_format='{:.3f}'
                 ):
@@ -29,7 +30,7 @@ def test_stationarity(data,
     Input: data
         stat_conf_level: confidence level to retaing H1 for Dickey-Fuller test
         columns, excl_col, date_col: columns to analyze, to exclude, date_col for graph (excluded from analysis)
-        height_per_ax, width_per_ax, ncols: plot params
+        height_per_ax, width_per_ax, ncols, titles: plot params
         plot_graphs: whether to plot graphs with original, rolling mean, rolling std 
         plot_test_results: whether to plot D-F test results on graph
         num_format: numeric format for plot_test_results, default {:.3f}
@@ -48,7 +49,7 @@ def test_stationarity(data,
         if plot_test_results:
             subplot_params['num_format'] = num_format
             subplot_params['pad'] = 25  # for string padding in text_box
-            subplot_params['txt_box_props'] = dict(boxstyle='round', alpha=0.8, facecolor='#EAEAF2')
+            subplot_params['txt_box_props'] = dict(boxstyle='round', alpha=0.8, facecolor='#EAEAF2', edgecolor='#EAEAF2')
         def stationarity_subplot(ax,
                                 col_name, 
                                 data=data, 
@@ -68,7 +69,7 @@ def test_stationarity(data,
             # Plot rolling statistics
             if date_col is not None:
                 date_col_temp = data[date_col].loc[col.index]  # adjusting dates because of drop_na step
-                ax.plot(date_col_temp, col, color=sns.color_palette()[0], alpha=0.9, label='Original')
+                ax.plot(date_col_temp, col, color=sns.color_palette()[0], alpha=0.8, label='Original')
                 ax.plot(date_col_temp, rol_mean, color=sns.color_palette()[3], label='Rolling Mean')
                 ax.plot(date_col_temp, rol_std, color=sns.color_palette()[2], label='Rolling Std')              
             else:
@@ -85,7 +86,7 @@ def test_stationarity(data,
                 for key,value in df_test[4].items():
                     text_str += '\nCritical Value {:s}'.format(key).ljust(pad) +  num_format.format(value)
                 ax.text(0.03, 0.58, text_str, fontsize=12, bbox=txt_box_props, transform = ax.transAxes)
-            ax.legend(loc='lower left')
+            # ax.legend(loc='lower left')
         visualization_basis(data=data,
                             subplot_function=stationarity_subplot,
                             subplot_params=subplot_params,
@@ -95,7 +96,8 @@ def test_stationarity(data,
                             ncols=ncols,
                             height_per_ax=height_per_ax,
                             width_per_ax=width_per_ax,
-                            titles=titles
+                            subplot_title_complements=subplot_title_complements,
+                            fig_title="Feature stationarity: Dickey-Fuller test and rolling mean and std"
                             )
     return result_dict
 
@@ -133,14 +135,17 @@ def remove_non_stationary_features(data, stat_results):
                 else:
                     if not stat_results[col_name]:
                         data.drop(columns=[col_name], inplace=True)
+                        dropped_cols.append(col_name)
             except KeyError:
                 non_existing_cols.append(col_name)
     if units_present: 
         settings.update('UNITS', units)
+    if len(dropped_cols) > 0:
+        print(" Non-stationarity: following features dropped ".center(120, "-"))
+        print("\n".join(dropped_cols))
     if len(non_existing_cols) > 0:
-        string = "\n".join(non_existing_cols)
-        print("Following features not found in provided dataframe:")
-        print(string)
+        print(" Following features not found in provided dataframe ".center(120, "-"))
+        print("\n".join(non_existing_cols))
     return kept_cols, dropped_cols
 
 def seasonal_decomposition(data,
@@ -150,7 +155,7 @@ def seasonal_decomposition(data,
                         ncols=3, 
                         height_per_ax=4, 
                         width_per_ax=5, 
-                        titles=None,
+                        subplot_title_complements=None,
                         plot_graphs=False
                         ):
     """
@@ -196,7 +201,8 @@ def seasonal_decomposition(data,
                             ncols=ncols,
                             height_per_ax=height_per_ax,
                             width_per_ax=width_per_ax,
-                            titles=titles
+                            subplot_title_complements=subplot_title_complements,
+                            fig_title="Feature seasonality: Original, trend, seasonality and noise"
                             )
     df_trend.reset_index(level=['Date'], inplace=True)
     df_seas.reset_index(level=['Date'], inplace=True)
@@ -204,15 +210,27 @@ def seasonal_decomposition(data,
     # df = pd.concat([df, df_trend, df_seas, df_resid], axis=1, keys=(['Original', 'Trend', 'Seasonality', 'Residuals']))
     return df_trend, df_seas, df_resid
 
-def remove_seasonality(data, data_seas, threshold = 0.2, columns=None, excl_cols=[]):
+def remove_seasonality(data, data_seas, threshold=0.2, columns=None, excl_cols=[]):
     if columns == None:
         columns = data.columns
+    non_existing_cols = []
+    modified_cols = []
     for col_name in columns:
         if col_name == 'Date' or col_name in excl_cols:
             continue
-        if data_seas[col_name + '_seasonal'].max() > threshold * data[col_name].std():
-            data[col_name] = data[col_name] - data_seas[col_name+'_seasonal']
-            print(col_name)
+        try:
+            if data_seas[col_name + '_seasonal'].max() > threshold * data[col_name].std():
+                data[col_name] = data[col_name] - data_seas[col_name+'_seasonal']
+                modified_cols.append(col_name)
+        except KeyError:
+            non_existing_cols.append(col_name)
+    if len(modified_cols) > 0:
+        print(" Seasonality removed from the following features ".center(120, "-"))
+        print("\n".join(modified_cols))
+    if len(non_existing_cols) > 0:
+        print(" Following features not found in provided data or data_seas ".center(120, "-"))
+        print("\n".join(non_existing_cols))
+    return modified_cols
 
 def vif_analysis(data, columns, threshold=10):
     excl_columns_vif = {}
@@ -231,7 +249,7 @@ def vif_analysis(data, columns, threshold=10):
         excl_columns_vif[max_vif_feature] = max_vif
         data_vif.drop(columns=[max_vif_feature], inplace=True)
         if len(data_vif.columns) == 1:
-            print(" Only one column remaining, stopping vif analysis ".center(120, "-"))
+            print(" VIF analysis stopped: only one feature remaining ".center(120, "-"))
             return vif, excl_columns_vif
         # New vif dataframe with fresh vif values
         VIF_factor = [variance_inflation_factor(data_vif.values, i) for i in range(data_vif.shape[1])]
@@ -240,16 +258,18 @@ def vif_analysis(data, columns, threshold=10):
         max_vif_idx = vif['VIF_factor'].idxmax
         max_vif = vif['VIF_factor'].loc[max_vif_idx]
     print(" VIF analysis succesfully completed ".center(120, "-"))
+    print("remaining features: {:d}".format(len(data_vif.columns)))
+    print("excluded features: {:d}".format(len(excl_columns_vif)))
     return vif, excl_columns_vif
 
-def shift_features(data, row_shifts = (1), columns=None, date_col='Date', excl_cols=[]):
+def shift_features(data, row_shifts=(1), columns=None, date_col='Date', excl_cols=[]):
     if columns == None:
         columns = data.columns
-    data_shifted = pd.DataFrame(index = data.index)
+    data_shifted = pd.DataFrame(index=data.index)
     for col_name in columns:
         if col_name == date_col or col_name in excl_cols:
             continue
-        for t in shifts:
+        for t in row_shifts:
             data_shifted[col_name + '_t-{:d}'.format(t)] = data[col_name].shift(t)
     return data_shifted
 
@@ -275,171 +295,3 @@ if __name__ == "__main__":
                    date_col='Date',
                    ncols=4,
                    plot_graphs=True)
-
-
-def test_stationarity_bis(data,
-                    stat_conf_level='1%',  # at which level of confidence to retain stationarity for Dickey-Fuller test
-                    columns=None, 
-                    date_col=None, 
-                    excl_cols=[],
-                    height_per_ax=2,
-                    width_per_ax=5,
-                    ncols=3,
-                    plot_graphs=True,
-                    plot_test_results=True,
-                    num_format='{:.3f}'
-                ):
-    """
-    Perfoms Dickey-Fuller test for feature stationarity
-    Input: data
-        stat_conf_level: confidence level to retaing H1 for Dickey-Fuller test
-        columns, excl_col, date_col: columns to analyze, to exclude, date_col for graph (excluded from analysis)
-        height_per_ax, width_per_ax, ncols: plot params
-        plot_graphs: whether to plot graphs with original, rolling mean, rolling std 
-        plot_test_results: whether to plot D-F test results on graph
-        num_format: numeric format for plot_test_results, default {:.3f}
-    Output: results_dict: dict with analyzed columns as keys and boolean for stationarity as value 
-    """
-    if columns is None:
-        columns = data.columns
-    result_dict = {}
-    if plot_graphs:
-        ncols = min(ncols, len(columns))
-        n_excl = len(columns) - len(set(columns) - set(excl_cols) - set([date_col]))  # actual number of excluded columns
-        nrows = ceil((len(columns) - n_excl) / ncols)
-        fig, axs = plt.subplots(nrows=nrows, ncols=ncols, figsize=(ncols * width_per_ax, nrows * height_per_ax))
-        if date_col is not None:
-            min_x, max_x = data[date_col].iloc[0], data[date_col].iloc[-1]  # same x_limits for all subplots: with dates
-        else:
-            min_x, max_x = data.index[0], data.index[-1]  # same x_limits for all subplots: without dates
-        j = 0  # number of excluded columns count
-        if plot_test_results:
-            pad = 25  # for string padding in text_box
-            txt_box_props = dict(boxstyle='round', alpha=0.8, facecolor='#EAEAF2')
-    
-        for i, col_name in zip(range(len(columns)), columns):
-            if col_name in excl_cols or col_name == date_col:  # do not plot excluded columns
-                j += 1
-                continue
-            idx_row, idx_col = (i - j) // ncols, (i - j) % ncols
-            if ncols == 1 and nrows == 1:
-                ax = axs 
-            elif (ncols == 1) != (nrows == 1):  # XOR operator
-                ax = axs[max(idx_row, idx_col)]
-            else:
-                ax = axs[idx_row, idx_col]
-            col = data[col_name].dropna()  # no D-F test without dropna
-
-            # Compute rolling statistics
-            rol_mean = col.rolling(window=12, min_periods=1).mean()
-            rol_std = col.rolling(window=12, min_periods=1).std()
-
-            # Plot rolling statistics
-            if date_col is not None:
-                date_col_temp = data[date_col].loc[col.index]  # adjusting dates because of drop_na step
-                ax.plot(date_col_temp, col, color=sns.color_palette()[0], alpha=0.9, label='Original')
-                ax.plot(date_col_temp, rol_mean, color=sns.color_palette()[3], label='Rolling Mean')
-                ax.plot(date_col_temp, rol_std, color=sns.color_palette()[2], label='Rolling Std')            
-                ax.set_xlim(left=min_x, right=max_x)
-            else:
-                ax.plot(col, color=sns.color_palette()[0], alpha=0.9, label='Original')
-                ax.plot(rol_mean, color=sns.color_palette()[3], label='Rolling Mean')
-                ax.plot(rol_std, color=sns.color_palette()[2], label='Rolling Std')
-                ax.set_xlim(left=min_x, right=max_x)
-
-            # Perform Dickey-Fuller test
-            df_test = adfuller(col, autolag='AIC')
-            result_dict[col_name] = df_test[0] < df_test[4][stat_conf_level]
-            if plot_test_results:
-                text_str = '\n'.join(('Dickey-Fuller test results'.center(pad + 6, ' '),
-                                      'Test Statistic:'.ljust(pad) +  num_format.format(df_test[0]),
-                                      'p-value:'.ljust(pad) +  num_format.format(df_test[1]),
-                                      '# Lags used:'.ljust(pad) +  '{:d}'.format(df_test[2]),
-                                      '# Observations used:'.ljust(pad) +  '{:d}'.format(df_test[3])
-                                     ))
-                for key,value in df_test[4].items():
-                    text_str += '\nCritical Value {:s}'.format(key).ljust(pad) +  num_format.format(value)
-                ax.text(0.03, 0.58, text_str, fontsize=12, bbox=txt_box_props, transform = ax.transAxes)
-            ax.set_title(col_name, size=14)
-            ax.legend(loc='lower left')
-        fig.tight_layout()
-        plt.show()
-    else:
-        for col_name in columns:
-            if col_name in excl_cols or col_name == date_col:
-                df_test = adfuller(data[col_name], autolag='AIC')
-                result_dict[col_name] = df_test[0] < df_test[4][stat_conf_level]
-    return result_dict
-
-
-def seasonal_decomposition_bis(data, date_col, columns=None, excl_cols=None, height_per_ax=4, width_per_ax=5, ncols=3, plot_graphs=False):
-    """
-    Perfoms sklearn seasonal decomposition
-    Input: data
-    date_col: for graph + needed to perform seasonal decomposition
-        columns, excl_col, date_col: columns to analyze, to exclude
-        height_per_ax, width_per_ax, ncols: plot params
-        plot_graphs: whether to plot graphs with original, rolling mean, rolling std 
-    Output: results_dict: dict with analyzed columns as keys and boolean for stationarity as value 
-    """
-    if columns is None:
-        columns = data.columns
-    n_features = len(columns)
-    df_trend = pd.DataFrame(index=data[date_col])
-    df_seas = pd.DataFrame(index=data[date_col])
-    df_resid = pd.DataFrame(index=data[date_col])
-    df = data.set_index(date_col)
-    if plot_graphs:
-        n_excl = n_features - len(set(columns) - set(excl_cols) - set([date_col]))  # actual number of excluded columns
-        ncols = min(ncols, n_features)
-        nrows = ceil((n_features - n_excl) / ncols)
-        fig, axs = plt.subplots(nrows=nrows, ncols=ncols, figsize=(ncols * width_per_ax, nrows * height_per_ax))
-        min_x, max_x = data[date_col].iloc[0], data[date_col].iloc[-1]  # same x_limits for all subplots: with dates
-        j = 0  # number of excluded columns count
-
-        for i, col_name in zip(range(n_features), columns):
-            if col_name in excl_cols or col_name == date_col:  # do not plot excluded columns
-                j += 1
-                continue
-            idx_row, idx_col = (i - j) // ncols, (i - j) % ncols
-            if ncols == 1 and nrows == 1:
-                ax = axs 
-            elif (ncols == 1) != (nrows == 1):  # XOR operator
-                ax = axs[max(idx_row, idx_col)]
-            else:
-                ax = axs[idx_row, idx_col]
-
-            # Decomposition
-            col = df[col_name].dropna()
-            decomposition = seasonal_decompose(col)
-            trend = decomposition.trend
-            seasonal = decomposition.seasonal
-            residual = decomposition.resid
-
-            # Plot decomposition
-            ax.plot(col.index, col, color=sns.color_palette()[0], alpha=0.9, label="Original values")
-            ax.plot(col.index, residual, color=sns.color_palette()[2], label='Residuals')
-            ax.plot(col.index, seasonal, color=sns.color_palette()[1], label='Seasonality')
-            ax.plot(col.index, trend, color=sns.color_palette()[3], label='Trend')
-            ax.set_xlim(left=min_x, right=max_x)
-            ax.set_title(col_name, size=14)
-            ax.legend(loc='best', ncol=2)
-            df_trend[col_name +   '_trend'] = trend
-            df_seas[col_name + '_seasonal'] = seasonal
-            df_resid[col_name + '_residual'] = residual
-        fig.tight_layout()
-        plt.show()
-    else:
-        for col_name in columns:
-            if col_name in excl_cols or col_name == date_col:
-                continue
-            col = df[col_name].dropna()
-            decomposition = seasonal_decompose(col)
-            df_trend[col_name + '_trend'] = decomposition.trend
-            df_seas[col_name + '_seasonal'] = decomposition.seasonal
-            df_resid[col_name + '_residual'] = decomposition.resid
-    df_trend.reset_index(level=['Date'], inplace=True)
-    df_seas.reset_index(level=['Date'], inplace=True)
-    df_resid.reset_index(level=['Date'], inplace=True)
-    # df = pd.concat([df, df_trend, df_seas, df_resid], axis=1, keys=(['Original', 'Trend', 'Seasonality', 'Residuals']))
-    return df_trend, df_seas, df_resid

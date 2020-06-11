@@ -11,7 +11,7 @@ def get(name):
     except KeyError:
         print("Setting {:s} not defined, please add it to the settings first".format(str(name))) 
 
-def replace(name, new_value):
+def update(name, new_value):
     try:
         settings_dict[name] = new_value
     except KeyError:

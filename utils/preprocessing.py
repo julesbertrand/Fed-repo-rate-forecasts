@@ -6,25 +6,37 @@ from glob import glob
 import ntpath
 
 from utils import settings
+from utils.visualization import visualize_features, units
 
-def data_processing_end(df, columns=None, date_format="%Y-%m-%d", month_offset=0):
+def data_processing_end(data, columns=None, visualize=False, date_format="%Y-%m-%d", month_offset=0):
     """
     End of preprocessing for each data file: put Date column as index, change type of given columns to numeric type
     input: dataframe with date column
             date format of date column
             colums to convert to float64
+            visualize to call utils.visualization.visualize_features
             month_offset: as all data will be dated on the end of month, month_offset is here to get as close as possible to the actual date of the data
     output: dataframe cleaned with column date as index and all given columns to float64 type
     """
-    if 'Date' in df.columns:
-        df['Date'] = pd.to_datetime(df['Date'], format=date_format) - pd.offsets.MonthEnd(month_offset)
-        df = df[df['Date'] < settings.get('LAST_AVLBLE_DATE')]
-    columns = columns if columns is not None else df.columns[1:]
-    for col in columns:
-        df[col] = pd.to_numeric(df[col])
-    df.set_index('Date', inplace=True)
-    df.sort_index(inplace=True)
-    return df
+    data.rename(columns=dict(zip(data.columns, [col_name.replace(" ", "_") for col_name in data.columns])), inplace=True)
+    if columns == None:
+        columns = data.columns
+    for col_name in columns:
+        if col_name != 'Date':
+            data[col_name] = pd.to_numeric(data[col_name])
+    if 'Date' in data.columns:
+        data['Date'] = pd.to_datetime(data['Date'], format=date_format) - pd.offsets.MonthEnd(month_offset)
+        data = data[data['Date'] < settings.get('LAST_AVLBLE_DATE')]
+    if visualize and len(columns) > 0:
+        visualize_features(
+            data=data,
+            columns=columns,
+            date_col='Date',
+            ncols=3,
+        )
+    data.set_index('Date', inplace=True)
+    data.sort_index(inplace=True)
+    return data
 
 def get_file_names(path = "Data/"):
     """
@@ -68,3 +80,11 @@ def data_processing_us_bls(file_names, path):
     df.set_index('Date', inplace=True)
     df.sort_index(inplace=True)
     return df
+
+if __name__ == "__main__":
+    data = pd.read_csv(settings.get('PATH_TO_DATA') + "WTISPLC.csv")
+    data.rename(columns={
+        'DATE':'Date',
+        'WTISPLC':'WTI oil price'
+        }, inplace=True)
+    data_oil = data_processing_end(data, month_offset=1, visualize=True)
