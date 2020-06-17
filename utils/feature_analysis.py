@@ -9,8 +9,9 @@ from statsmodels.tsa.stattools import adfuller  # Dickey-fuller test for station
 from statsmodels.tsa.seasonal import seasonal_decompose  # seasonal decomposition of a signal (trend, seasonal, residuals)
 from statsmodels.stats.outliers_influence import variance_inflation_factor  # VIF analysis
 
-from utils import settings
-from utils.visualization import visualization_basis
+if not __name__ == "__main__":  # for test purposes
+    from utils import settings
+    from utils.visualization import visualization_basis
 
 def test_stationarity(data,
                     stat_conf_level='1%',  # at which level of confidence to retain stationarity for Dickey-Fuller test
@@ -53,7 +54,8 @@ def test_stationarity(data,
         def stationarity_subplot(ax,
                                 col_name, 
                                 data=data, 
-                                date_col=date_col, 
+                                date_col=date_col,
+                                text_font_size=10,
                                 plot_test_results=False, 
                                 txt_box_props=None, 
                                 pad=None, 
@@ -85,17 +87,17 @@ def test_stationarity(data,
                                     ))
                 for key,value in df_test[4].items():
                     text_str += '\nCritical Value {:s}'.format(key).ljust(pad) +  num_format.format(value)
-                ax.text(0.03, 0.58, text_str, fontsize=12, bbox=txt_box_props, transform = ax.transAxes)
+                ax.text(0.03, 0.5, text_str, fontsize=text_font_size - 2, bbox=txt_box_props, transform = ax.transAxes)
             # ax.legend(loc='lower left')
         visualization_basis(data=data,
                             subplot_function=stationarity_subplot,
                             subplot_params=subplot_params,
                             date_col=date_col,
-                            columns=columns,
-                            excl_cols=excl_cols,
+                            items=columns,
+                            excl_items=excl_cols,
                             ncols=ncols,
                             height_per_ax=height_per_ax,
-                            width_per_ax=width_per_ax,
+                            # width_per_ax=width_per_ax,
                             subplot_title_complements=subplot_title_complements,
                             fig_title="Feature stationarity: Dickey-Fuller test and rolling mean and std"
                             )
@@ -184,23 +186,30 @@ def seasonal_decomposition(data,
         df_seas[col_name + '_seasonal'] = decomposition.seasonal
         df_resid[col_name + '_residual'] = decomposition.resid
     if plot_graphs:
-        def seasonality_subplot(ax, col_name, df_original=df, df_trend=df_trend, df_seas=df_seas, df_resid=df_resid):
+        def seasonality_subplot(ax,
+                                col_name,
+                                df_original=df,
+                                df_trend=df_trend,
+                                df_seas=df_seas,
+                                df_resid=df_resid,
+                                text_font_size=10
+                            ):
             col = df[col_name]
             # Plot decomposition
             ax.plot(col.index, col, color=sns.color_palette()[0], alpha=0.9, label="Original values")
             ax.plot(col.index, df_resid[col_name + '_residual'], color=sns.color_palette()[2], label='Residuals')
             ax.plot(col.index, df_seas[col_name + '_seasonal'], color=sns.color_palette()[1], label='Seasonality')
             ax.plot(col.index, df_trend[col_name + '_trend'], color=sns.color_palette()[3], label='Trend')
-            ax.legend(loc='best', ncol=2)
+            ax.legend(loc='best', ncol=2, fontsize=text_font_size - 2)
         visualization_basis(data=data,
                             subplot_function=seasonality_subplot,
                             subplot_params={},
                             date_col=date_col,
-                            columns=columns,
-                            excl_cols=excl_cols,
+                            items=columns,
+                            excl_items=excl_cols,
                             ncols=ncols,
                             height_per_ax=height_per_ax,
-                            width_per_ax=width_per_ax,
+                            # width_per_ax=width_per_ax,
                             subplot_title_complements=subplot_title_complements,
                             fig_title="Feature seasonality: Original, trend, seasonality and noise"
                             )
@@ -290,8 +299,22 @@ if __name__ == "__main__":
     #                 columns=NUM_COLS[:6],
     #                date_col='Date',
     #                ncols=4)
+    from visualization import visualization_basis
     seasonal_decomposition(data=data,
                     columns=NUM_COLS[:6],
                    date_col='Date',
                    ncols=4,
                    plot_graphs=True)
+    test_stationarity(data=data,
+                    stat_conf_level='1%',  # at which level of confidence to retain stationarity for Dickey-Fuller test
+                    date_col='Date', 
+                    columns=NUM_COLS[:6], 
+                    excl_cols=[],
+                    plot_graphs=True,
+                    ncols=3, 
+                    height_per_ax=4, 
+                    width_per_ax=5, 
+                    subplot_title_complements=None,
+                    plot_test_results=True,
+                    num_format='{:.3f}'
+                )

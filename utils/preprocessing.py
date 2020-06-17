@@ -2,8 +2,6 @@ import numpy as np
 import pandas as pd
 import datetime as dt
 from functools import reduce
-from glob import glob
-import ntpath
 
 from utils import settings
 from utils.visualization import visualize_features, units
@@ -37,19 +35,6 @@ def data_processing_end(data, columns=None, visualize=False, date_format="%Y-%m-
     data.set_index('Date', inplace=True)
     data.sort_index(inplace=True)
     return data
-
-def get_file_names(path = "Data/"):
-    """
-    Retrieve all data files names in a directory 
-    input: path
-    output: list of file names
-    """
-    temp = glob(path + "/*.csv")
-    file_names = []
-    for file_name in temp:
-        _, file_name = ntpath.split(file_name) 
-        file_names.append(file_name)
-    return file_names
 
 def data_processing_us_bls(file_names, path):
     """

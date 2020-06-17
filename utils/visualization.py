@@ -54,60 +54,99 @@ def visualization_basis(data,
                         subplot_function,
                         subplot_params={},
                         date_col=None,
-                        columns=None,
-                        excl_cols=[],
+                        items=None,
+                        excl_items=[],
                         ncols=3,
-                        height_per_ax=3,
-                        width_per_ax=5,
+                        height_per_ax=3,  # must be an integer
+                        # width_per_ax=5,  # must be an integer
                         subplot_title_complements=None,
-                        fig_title=None
+                        fig_title=None,
+                        give_grid_to_subplot_function=False
                         ):
     """
     Give a frame for subplots for all features visualization functions
     """
-    if columns is None:
-        columns = data.columns
-    n_excl = len(columns) - len(set(columns) - set(excl_cols) - set([date_col]))  # actual number of excluded columns
-    ncols = min(ncols, len(columns) - n_excl)   
-    nrows = ceil((len(columns) - n_excl) / ncols)
+    if items is None:
+        items = data.columns
+    n_excl = len(items) - len(set(items) - set(excl_items) - set([date_col]))  # actual number of excluded items
+    ncols = min(ncols, len(items) - n_excl)   
+    nrows = ceil((len(items) - n_excl) / ncols)
     plt.style.use("seaborn-darkgrid")
-    fig, axes = plt.subplots(
-        nrows=nrows,
-        ncols=ncols, 
-        figsize=(ncols * width_per_ax, nrows * height_per_ax)
+    # Create the grid
+    grid_w = ncols #* width_per_ax
+    grid_h = nrows * (height_per_ax + 1) + 1
+    fig = plt.figure(figsize=(16, grid_h))
+    grid = plt.GridSpec(
+        grid_h,
+        grid_w,
+        hspace=0.5,
+        wspace=0.2
     )
-    if date_col is not None:
-        min_x, max_x = data[date_col].iloc[0], data[date_col].iloc[-1]  # same x_limits for all subplots: with dates
-    else:
-        min_x, max_x = data.index[0], data.index[-1]  # same x_limits for all subplots: without dates
+    # Suptitle in the top box of the grid (box unused by subplots)
+    title_height = 2
+    ax_title = fig.add_subplot(grid[:title_height, :], fc='w')
+    ax_title.annotate(
+        fig_title, fontsize = 18,
+        xy=(0.5, 0.7), xycoords='axes fraction',
+        va='center', ha='center'
+    )
+    ax_title.tick_params(
+        axis='both', which='both',
+        left=False, labelleft=False,
+        bottom=False, labelbottom=False
+    )
+    # x axis min and max
+    if date_col is not None:  # same x_limits for all subplots: with dates
+        min_x = data[date_col].iloc[0] - pd.offsets.MonthEnd(12)
+        max_x = data[date_col].iloc[-1] + pd.offsets.MonthEnd(12)
+    else:  # same x_limits for all subplots: without dates
+        min_x = data.index[0]
+        max_x = data.index[-1]  
+    # Titles for subplots
+    items_names = list(map(lambda x: str(x), items))
     if isinstance(subplot_title_complements, dict):
         pass
-    elif subplot_title_complements == None:
-        subplot_title_complements = dict(zip(columns, columns))
-    elif isinstance(titles, str):
-        subplot_title_complements = dict(zip(columns, [", " + subplot_title_complements]))
-    elif isinstance(titles, list):
-        subplot_title_complements = dict(zip(columns, [", " + t for t in subplot_title_complements]))
-    j = 0  # number of excluded columns count
-    for i, col_name in zip(range(len(columns)), columns):
-        if col_name in excl_cols or col_name == date_col:  # do not plot excluded columns
+    else:
+        if subplot_title_complements == None:
+            zip_title = zip(items_names, items_names)
+        elif isinstance(titles, str):
+            zip_title = zip(items_names, [", " + subplot_title_complements])
+        elif isinstance(titles, list):
+            zip_title = zip(items_names, [", " + t for t in subplot_title_complements])
+        subplot_title_complements = dict(zip_title)
+    j = 0  # number of excluded items count
+    subplot_params['text_font_size'] = 12 - ncols + 2
+    for i, item in enumerate(items):
+        if item in excl_items or item == date_col:  # do not plot excluded items
             j += 1
             continue
         # choose subplot position
         if ncols == 1 and nrows == 1:
-            ax = axes 
+            top, bottom, horiz = title_height, height_per_ax + title_height - 1, 0
         else:
             idx_row, idx_col = (i - j) // ncols, (i - j) % ncols
-            if (ncols == 1) != (nrows == 1):  # XOR operator
-                ax = axes[max(idx_row, idx_col)]
-            else:
-                ax = axes[idx_row, idx_col]
+            top = idx_row * (height_per_ax + 1) + title_height
+            bottom = idx_row * (height_per_ax + 1) + height_per_ax + title_height - 1
+            horiz = idx_col           
         # plot on subplot
-        subplot_function(ax, col_name, **subplot_params)
-        ax.set_xlim(left=min_x, right=max_x)
-        ax.set_title(subplot_title_complements[col_name].replace("_", " "), size=14)
-    fig.suptitle(fig_title, fontsize=18)
-    fig.tight_layout(rect=[0, 0, 1, 0.97])
+        if give_grid_to_subplot_function:
+            grid_pos = (fig, grid, top, bottom, horiz)
+            ax_pos = len(fig.axes)
+            subplot_function(grid_pos, item, **subplot_params)
+            for ax in fig.axes[ax_pos:]:  # first ax created in subplot_function
+                ax.set_xlim(left=min_x, right=max_x)
+                ax.tick_params(labelsize=12 - ncols + 2)
+            if len(fig.axes[ax_pos].get_title()) == 0:  # Set title for first ax created in given grid_pos if none has been given
+                fig.axes[ax_pos].set_title(subplot_title_complements[items_names[i]].replace("_", " "), fontsize=16 - ncols + 2)
+        else:
+            ax = fig.add_subplot(grid[top:bottom + 1, horiz])
+            subplot_function(ax, item, **subplot_params)
+            ax.set_xlim(left=min_x, right=max_x)
+            ax.tick_params(labelsize=12 - ncols + 2)
+            if len(ax.get_title()) == 0:  # Set title for ax if none exists
+                ax.set_title(subplot_title_complements[items_names[i]].replace("_", " "), fontsize=16 - ncols + 2)
+    fig.tight_layout()
+    # grid.tight_layout(fig)
     plt.show()
 
 
@@ -122,7 +161,7 @@ def visualize_features(data,
                         ):
     if columns is None:
         columns = data.columns
-    def visualize_features_subplot(ax, col_name, data=data, date_col=date_col):
+    def visualize_features_subplot(ax, col_name, data=data, date_col=date_col, text_font_size=10):
         if date_col is not None:
             ax.plot(data[date_col], data[col_name])
         else:
@@ -131,11 +170,11 @@ def visualize_features(data,
                         subplot_function=visualize_features_subplot,
                         subplot_params={},
                         date_col=date_col,
-                        columns=columns,
-                        excl_cols=excl_cols,
+                        items=columns,
+                        excl_items=excl_cols,
                         ncols=ncols,
                         height_per_ax=height_per_ax,
-                        width_per_ax=width_per_ax,
+                        # width_per_ax=width_per_ax,
                         subplot_title_complements=subplot_title_complements,
                         fig_title="Feature visualization"
                         )
@@ -154,8 +193,9 @@ if __name__ == "__main__":
     data = pd.merge(data, data_pct_change, on='Date')
     sns.set()
     visualize_features(data=data,
-                    columns=NUM_COLS[:6],
+                    columns=NUM_COLS[:12],
                    date_col='Date',
-                   ncols=4)
+                   ncols=2,
+                   height_per_ax=3)
     
 
