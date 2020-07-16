@@ -6,7 +6,7 @@ from functools import reduce
 from utils import settings
 from utils.visualization import visualize_features, units
 
-def data_processing_end(data, columns=None, visualize=False, date_format="%Y-%m-%d", month_offset=0):
+def data_processing_end(data, columns=None, visualize=False, date_col=None, date_format="%Y-%m-%d", month_offset=0):
     """
     End of preprocessing for each data file: put Date column as index, change type of given columns to numeric type
     input: dataframe with date column
@@ -19,11 +19,16 @@ def data_processing_end(data, columns=None, visualize=False, date_format="%Y-%m-
     data.rename(columns=dict(zip(data.columns, [col_name.replace(" ", "_") for col_name in data.columns])), inplace=True)
     if columns == None:
         columns = data.columns
+    if date_col in columns:
+        columns = list(columns)
+        columns.remove(date_col)
     for col_name in columns:
-        if col_name != 'Date':
-            data[col_name] = pd.to_numeric(data[col_name])
-    if 'Date' in data.columns:
-        data['Date'] = pd.to_datetime(data['Date'], format=date_format) - pd.offsets.MonthEnd(month_offset)
+        # if col_name != date_col:
+        data[col_name] = pd.to_numeric(data[col_name])
+    if date_col is not None:
+        data['Date'] = pd.to_datetime(data[date_col], format=date_format) - pd.offsets.MonthEnd(month_offset)
+        if date_col != 'Date':
+            data.drop(columns=[date_col], inplace=True)
         data = data[data['Date'] < settings.get('LAST_AVLBLE_DATE')]
     if visualize and len(columns) > 0:
         visualize_features(
@@ -49,7 +54,7 @@ def data_processing_us_bls(file_names, path):
         data.columns = data.iloc[0]
         data = data[1:]
         value_name = file_name.replace("economics_", "").replace(".csv", "")
-        data = pd.melt(data, 
+        data = pd.melt(data,  # pivot table to column table
                        id_vars = 'Year',
                        value_vars = list(data.columns[1:13]),
                        var_name = 'Month',
