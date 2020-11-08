@@ -1,0 +1,9 @@
+*.ipynb_checkpoints
+Data
+*.vscode
+*__pycache__
+
+# personal stuff
+code_snippets.txt
+resources/*.pdf
+resources/*.xlsx
