@@ -5,6 +5,7 @@ from glob import glob
 import ntpath
 import os
 import joblib
+import yaml
 
 
 def get_file_names(path="Data/", extension=".csv"):
@@ -21,12 +22,17 @@ def get_file_names(path="Data/", extension=".csv"):
     return file_names
 
 
-def open_file(path, file_name):
-    _, extension = file_name.split(".")
+def open_file(path, sep=";"):
+    _, extension = file_path.rsplit(".", 1)
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(file_path)
     if extension == "csv":
-        f = pd.read_csv(path + file_name, sep=";")
+        f = pd.read_csv(file_path, sep=sep)
+    elif extension == "yaml":
+        with open(path, 'r') as file_name:
+            f = yaml.load(file_name, Loader=yaml.FullLoader)
     else:
-        f = joblib.load(path + file_name)
+        f = joblib.load(file_path)
     return f
 
 
@@ -39,7 +45,11 @@ def open_files(path, file_names):
     return f_dict
 
 
-def save_file(path, data, file_name, replace=False):
+def save_file(path, file_name, data, replace=False):
+    if path[-1] != "/":
+        path += "/"
+    if not os.path.exists(path):
+        raise FileNotFoundError
     file_name, extension = file_name.split(".")
     if replace:
         try:
@@ -55,7 +65,7 @@ def save_file(path, data, file_name, replace=False):
             else:
                 break
         file_name += "_{:d}".format(i)
-        file_name = ".".join(file_name, extension)
+    file_name = ".".join((file_name, extension))
     if extension == "csv":
         data.to_csv(
             path + file_name,
@@ -63,7 +73,7 @@ def save_file(path, data, file_name, replace=False):
             sep=";",
             encoding="utf-8",
         )
-    elif extension == ".yaml":
+    elif extension == "yaml":
         with open(path + file_name, "w") as file_name:
             yaml.dump(data, file_name)
     else:
@@ -75,6 +85,8 @@ def save_files(path, files, replace=False):
     files is a dict file_name: file
     replace = True means that files sith same files_names as the provided ones will be overwritten, carefull
     """
+    if path[-1] != "/":
+        path += "/"
     if not os.path.exists(path):
         os.makedirs(path)
     files_not_saved = []

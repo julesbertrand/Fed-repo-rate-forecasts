@@ -8,9 +8,9 @@ FF_month_avg_pct_change: Growth rate %
 FF_spot_EOM: Interest rate
 FF_trend_diff: 'categorical: Up, Down, Stable'
 FF_trend_pct_change: 'categorical: Up, Down, Stable'
-G-20_GDP_gth_rate: Growth rate %
-G-7_GDP_gth_rate: Growth rate %
-GSPC(S&P500): Index
+G20_GDP_gth_rate: Growth rate %
+G7_GDP_gth_rate: Growth rate %
+GSPC(SP500): Index
 OECD_GDP_gth_rate: Growth rate %
 Recession: Binary
 USA_GDP_gth_rate: Growth rate %
