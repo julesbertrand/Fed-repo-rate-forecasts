@@ -23,16 +23,16 @@ def get_file_names(path="Data/", extension=".csv"):
 
 
 def open_file(path, sep=";"):
-    _, extension = file_path.rsplit(".", 1)
-    if not os.path.exists(file_path):
-        raise FileNotFoundError(file_path)
+    _, extension = path.rsplit(".", 1)
+    if not os.path.exists(path):
+        raise FileNotFoundError(path)
     if extension == "csv":
-        f = pd.read_csv(file_path, sep=sep)
+        f = pd.read_csv(path, sep=sep)
     elif extension == "yaml":
         with open(path, 'r') as file_name:
-            f = yaml.load(file_name, Loader=yaml.FullLoader)
+            f = yaml.safe_load(file_name)
     else:
-        f = joblib.load(file_path)
+        f = joblib.load(path)
     return f
 
 
