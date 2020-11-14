@@ -2,6 +2,11 @@ categorical features:
 - potus
 - houseOfRep
 - fedChair
+- Recession
+- Fed_rate_month_avg_diff_3_class
+- Fed_rate_month_avg_diff_5_class
+- Fed_rate_month_avg_diff_9_class
+- Fed_rate_month_avg_trend
 numeric features:
 - cpi_all_seas
 - cpi_all_unadj
@@ -37,6 +42,8 @@ numeric features:
 - Non_fin_business_inv_total
 - Perso_consumption_evol_m
 - Perso_consumption_real_q
+- Fed_rate_month_avg
+- Fed_rate_spot_EOM
 - Fed_rate_month_avg_diff
 - Fed_rate_month_avg_pct_change
 - cpi_all_seas_pct_change
