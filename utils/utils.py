@@ -29,7 +29,7 @@ def open_file(path, sep=";"):
     if extension == "csv":
         f = pd.read_csv(path, sep=sep)
     elif extension == "yaml":
-        with open(path, 'r') as file_name:
+        with open(path, "r") as file_name:
             f = yaml.safe_load(file_name)
     else:
         f = joblib.load(path)
@@ -92,7 +92,7 @@ def save_files(path, files, replace=False):
     files_not_saved = []
     for file_name, file in files.items():
         try:
-            save_file(path, file, file_name, replace=replace)
+            save_file(path=path, data=file, file_name=file_name, replace=replace)
         except Exception as e:
             files_not_saved.append(file_name + ": " + str(e))
     print(
