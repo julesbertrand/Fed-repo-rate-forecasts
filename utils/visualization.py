@@ -17,8 +17,7 @@ def visualization_grid(give_grid_to_subplot_function=False):
             height_per_ax=3,
             subplot_titles_suffix=None,
             fig_title=None,
-            *args,
-            **kwargs
+            subplot_params={},
         ):
             if items is None:
                 items = data.columns
@@ -101,13 +100,7 @@ def visualization_grid(give_grid_to_subplot_function=False):
                     grid_pos = (fig, grid, top, bottom, horiz)
                     ax_pos = len(fig.axes)
                     subplot_function(
-                        grid_pos,
-                        item,
-                        data=data,
-                        date_col=date_col,
-                        text_font_size=text_font_size,
-                        *args,
-                        **kwargs
+                        grid_pos, item, text_font_size=text_font_size, **subplot_params
                     )
                     for ax in fig.axes[ax_pos:]:
                         # set x lim and ticks for all subplots created by the subplot function
@@ -123,13 +116,7 @@ def visualization_grid(give_grid_to_subplot_function=False):
                     ax = fig.add_subplot(grid[top : bottom + 1, horiz])
                     ax.set_xlim(left=min_x, right=max_x)
                     subplot_function(
-                        ax,
-                        item,
-                        data=data,
-                        date_col=date_col,
-                        text_font_size=text_font_size,
-                        *args,
-                        **kwargs
+                        ax, item, text_font_size=text_font_size, **subplot_params
                     )
                     ax.tick_params(labelsize=text_font_size)
                     if len(ax.get_title()) == 0:  # Set title for ax if none exists
@@ -171,6 +158,7 @@ def visualize_features(
         height_per_ax=height_per_ax,
         subplot_titles_suffix=subplot_titles_suffix,
         fig_title="Feature visualization",
+        subplot_params={"data": data, "date_col": date_col},
     )
 
 
@@ -183,11 +171,10 @@ def visualize_stationarity(
     height_per_ax=2,
     subplot_titles_suffix=None,
     addfuller_results=None,
+    plot_test_results=True,
 ):
     if addfuller_results is None:
         plot_test_results = False
-    else:
-        plot_test_results = True
 
     @visualization_grid(give_grid_to_subplot_function=False)
     def stationarity_subplot(
@@ -195,10 +182,11 @@ def visualize_stationarity(
         col_name,
         data,
         date_col,
-        text_font_size=10,
-        plot_test_results=plot_test_results,
+        plot_test_results,
+        addfuller_results,
         txt_box_props={},
         num_format="{:.1f}",
+        text_font_size=10,
     ):
         col = data[col_name].dropna()
         # Compute rolling statistics
@@ -264,7 +252,13 @@ def visualize_stationarity(
         height_per_ax=height_per_ax,
         subplot_titles_suffix=subplot_titles_suffix,
         fig_title=fig_title,
-        txt_box_props=txt_box_props,
+        subplot_params={
+            "data": data,
+            "date_col": date_col,
+            "txt_box_props": txt_box_props,
+            "addfuller_results": addfuller_results,
+            "plot_test_results": plot_test_results,
+        },
     )
 
 
@@ -284,35 +278,35 @@ def visualize_seasonality(
     def seasonality_subplot(
         ax,
         col_name,
-        data=data,
-        date_col=date_col,
-        df_trend=df_trend,
-        df_seas=df_seas,
-        df_resid=df_resid,
+        df_original,
+        date_col,
+        df_trend,
+        df_seas,
+        df_resid,
         text_font_size=10,
     ):
         # Plot decomposition
         ax.plot(
-            data[date_col],
-            data[col_name],
+            df_original[date_col],
+            df_original[col_name],
             color=sns.color_palette()[0],
             alpha=0.9,
             label="Original values",
         )
         ax.plot(
-            data[date_col],
+            df_original[date_col],
             df_resid[col_name + "_residual"],
             color=sns.color_palette()[2],
             label="Residuals",
         )
         ax.plot(
-            data[date_col],
+            df_original[date_col],
             df_seas[col_name + "_seasonal"],
             color=sns.color_palette()[1],
             label="Seasonality",
         )
         ax.plot(
-            data[date_col],
+            df_original[date_col],
             df_trend[col_name + "_trend"],
             color=sns.color_palette()[3],
             label="Trend",
@@ -329,4 +323,11 @@ def visualize_seasonality(
         height_per_ax=height_per_ax,
         subplot_titles_suffix=subplot_titles_suffix,
         fig_title=fig_title,
+        subplot_params={
+            "df_original": data,
+            "date_col": date_col,
+            "df_trend": df_trend,
+            "df_seas": df_seas,
+            "df_resid": df_resid,
+        },
     )
