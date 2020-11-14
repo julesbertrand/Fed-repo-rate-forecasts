@@ -64,7 +64,7 @@ def save_file(path, file_name, data, replace=False):
                 i += 1
             else:
                 break
-        file_name += "_{:d}".format(i)
+        file_name += "_{:d}".format(i) * (i > 0)
     file_name = ".".join((file_name, extension))
     if extension == "csv":
         data.to_csv(

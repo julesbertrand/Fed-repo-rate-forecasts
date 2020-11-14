@@ -10,6 +10,7 @@ from statsmodels.tsa.stattools import adfuller
 
 # seasonal decomposition of a signal (trend, seasonal, residuals)
 from statsmodels.tsa.seasonal import seasonal_decompose
+
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 from sklearn.preprocessing import StandardScaler
 
@@ -186,7 +187,8 @@ class Dataset:
             ncols=ncols,
             height_per_ax=height_per_ax,
             subplot_titles_suffix=subplot_titles_suffix,
-            addfuller_results=None,
+            addfuller_results=addfuller_results,
+            plot_test_results=plot_test_results,
         )
 
     def remove_non_stationary_features(
@@ -246,7 +248,7 @@ class Dataset:
         self,
         columns=[],
         excl_cols=[],
-        plot_text=False,
+        plot_test_results=False,
         ncols=3,
         height_per_ax=2,
         subplot_titles_suffix=None,
@@ -258,7 +260,7 @@ class Dataset:
             columns=columns,
             excl_cols=excl_cols,
             addfuller_results=res_tests,  # will plot text on graphs
-            plot_test_results=plot_text,
+            plot_test_results=plot_test_results,
             ncols=ncols,
             height_per_ax=height_per_ax,
             subplot_titles_suffix=subplot_titles_suffix,
@@ -456,25 +458,18 @@ class Dataset:
                 for c in self.X.columns
                 if c in self._features_info["numeric features"]
             ]
-            X_train[cols] = scaler.fit_transform(X_train[cols])
-            X_test[cols] = scaler.transform(X_test[cols])
+            X_train.loc[:, cols] = scaler.fit_transform(X_train[cols])
+            X_test.loc[:, cols] = scaler.transform(X_test[cols])
         self._params["X_cols"] = list(self.X.columns)
         self._params["Y_cols"] = list(self.Y.columns)
         self._params["standardize"] = standardize
+        self._params["test_size"] = test_size
         return X_train, Y_train, X_test, Y_test
 
     def save_dataset(
         self, X_train, Y_train, X_test, Y_test, path="./Models", replace=False
     ):
-        start_date = self._params["start_date"]
-        self._params["start_date"] = start_date
-        end_date = self._params["end_date"]
-        self._params["end_date"] = end_date
         files = [X_train, Y_train, X_test, Y_test, self._params]
         file_names = ["X_train.csv", "Y_train.csv", "X_test.csv", "Y_test.csv"]
         file_names.append("params.yaml")
-        path += "/startdate_{:s}_testdate_{:s}/".format(
-            start_date.strftime("%Y"),
-            end_date.strftime("%Y"),
-        )
         save_files(path=path, files=dict(zip(file_names, files)), replace=replace)
