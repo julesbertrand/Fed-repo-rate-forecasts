@@ -7,4 +7,4 @@ __pycache__/
 code_snippets.txt
 resources/*.pdf
 resources/*.xlsx
-utils_old/
+# utils_old/
