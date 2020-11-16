@@ -1,146 +1,120 @@
-import numpy as np 
+import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import matplotlib.ticker as mtick
-import seaborn as sns
-from tqdm.notebook import tqdm
 
-import itertools  # time_series_split_cv
-import ast  # for litteral_eval in time_series_split_cv
-
+from sklearn.model_selection import GridSearchCV, TimeSeriesSplit
 from sklearn import metrics
-from sklearn.model_selection import TimeSeriesSplit
-from sklearn.base import is_classifier, is_regressor
+from sklearn.decomposition import PCA
+from statsmodels.stats.outliers_influence import variance_inflation_factor
 
-if not __name__ == "__main__":
-    from utils.model_visualization import * 
 
-SEED = 10
-
-def cv_model(X_train,
-             Y_train,
-             X_test,
-             Y_test,
-             predicted_feature,
-             estimator,
-             cv_params=None,
-             n_splits_cv=5,
-             metric=metrics.r2_score,
-             plot_feature_importance=True,
-             plot_cv_scores=True,
-             plot_model_perf=False,
-             plot_reconstitution=False,
-             reconstitution_feature=None,
-             reconstitution_type_of_diff=None  # None or 'diff' or 'pct'                
-            ):
-    mean_results_cv = time_series_split_cv(X_train,
-                                           Y_train[predicted_feature],
-                                           estimator = estimator,
-                                           n_splits = n_splits_cv,
-                                           cv_params = cv_params,
-                                           metric = metric
-                                          )
-    best_model = mean_results_cv.loc[mean_results_cv['validation score'].idxmax]
-    with pd.option_context('max_colwidth', None):
-        print("\n" + "Best model found through cross-validation: ".center(120, "-"))
-        print(best_model)
-    model = estimator.set_params(**best_model.loc['params'])
-    model = model.fit(X_train, Y_train[predicted_feature])
-    
-    if plot_feature_importance:
-        feature_importance(model, X_train.columns)
-    if plot_model_perf:
-        _, _ = plot_model(X_train, 
-                           Y_train,
-                           X_test,
-                           Y_test,
-                           date_col='Date',
-                           predicted_feature=predicted_feature,
-                           models=[model],
-                           model_params=[best_model.loc['params']],
-                           ncols=1
-                          )
-    if plot_reconstitution:
-        _, _ = plot_model(X_train, 
-                           Y_train,
-                           X_test,
-                           Y_test,
-                           date_col='Date',
-                           predicted_feature=predicted_feature,
-                           models=[model],
-                           model_params=[best_model.loc['params']],
-                           type_of_change=reconstitution_type_of_diff,
-                           plotted_feature=reconstitution_feature,
-                           ncols=1
-                          )
-    return mean_results_cv, model
-
-def time_series_split_cv(X_train,  # df or series
-                         Y_train,  # series
-                         estimator,
-                         n_splits=5,
-                         cv_params={},  # same format as in sklearn GridSearchCV
-                         metric = metrics.r2_score
-                        ):
-    """
-    Cross-validation from timeseries for all estimators from sklearn
-    Input: X_train, Y_train, estimator from sklearn, n_splits=k for k-folds cv, params grid to test (GridSearch only)
-    Output: Dataframe with columns params (dict type), # fold, training score and validation score 
-    """
+def cross_validate(
+    X_train, Y_train, estimator, param_grid={}, n_splits=5, scoring=metrics.r2_score
+):
+    cv_params = {}
+    fixed_params = {}
+    n_permut = 1
+    for key, val in param_grid.items():
+        if len(val) == 1:
+            fixed_params[key] = val[0]
+        else:
+            cv_params[key] = val
+            n_permut *= len(val)
     print("\n" + " Feature to be predicted: ".center(120, "-"))
     print(Y_train.name)
     print("\n" + " Estimator: ".center(120, "-"))
     print(estimator.__class__.__name__)
     print("\n" + " Metric for evaluation: ".center(120, "-"))
-    print(metric.__name__)
+    print(scoring if isinstance(scoring, str) else scoring.__name__)
+    if len(fixed_params.keys()) > 0:
+        print("\n" + " Fixed params: ".center(120, "-"))
+        [print(key, value) for key, value in fixed_params.items()]
     print("\n" + " Params to be tested: ".center(120, "-"))
     [print(key, value) for key, value in cv_params.items()]
-    params_list = list(itertools.product(*cv_params.values()))
-    n_combi = len(params_list)
-    print("\n" + " # of possible combinations to be cross-validated: {:d}".format(n_combi))
+    print(
+        "\n # of permutations to be cross-validated: {:d} \n # of works: {:d}".format(
+            n_permut, n_permut * n_splits
+        )
+    )
     answer = input("\n" + "Continue with these c-v parameters ? (y/n)  ")
     if answer == "n" or answer == "no":
         print("Please redefine inputs.")
         return
-    i = 1
-    scores = []
-    iterator = TimeSeriesSplit(n_splits=n_splits).split(X_train)
-    params_list = [dict(zip(cv_params.keys(), e)) for e in params_list]
-    n_candidates = len(params_list)
-    print("\n%s" % " Cross-validation starting for {:s}".format(
-        estimator.__class__.__name__
-        ).center(120, "-"))
-    print(" Fitting {:d} folds for each of {:d} candidates, totalling {:d} fits \n".format(n_splits,
-                                                                                           n_candidates,
-                                                                                           n_splits * n_candidates
-                                                                                          ))
-    for tr_index, val_index in iterator:
-        print(" Folder #{:d} starting ".format(i).center(120, "-"))
-        X_tr, X_val = X_train.iloc[tr_index], X_train.iloc[val_index]
-        y_tr, y_val = Y_train.iloc[tr_index], Y_train.iloc[val_index]
-        for params in tqdm(params_list, total=n_candidates):
-            model_cv = estimator.set_params(**params)
-            model_cv.fit(X_tr, y_tr)
-            y_pred_tr = model_cv.predict(X_tr)
-            y_pred_val = model_cv.predict(X_val)
-            scores.append([params,
-                          i,
-                          metric(y_true=y_tr, y_pred=y_pred_tr),
-                          metric(y_true=y_val, y_pred=y_pred_val)
-                         ])
-        i += 1
-    # Convert 'params' to str to perform pivot (otherwise error)
-    results_cv = pd.DataFrame(scores,
-                              columns=['params', 'fold', 'training score' ,'validation score']
-                             )
-    results_cv['params'] = results_cv['params'].apply(lambda x: str(x))
-    
-    # Pivot table to get the mean values for each params over all folds
-    mean_results_cv = pd.pivot_table(results_cv, values=['training score', 'validation score'],
-                                     index='params', aggfunc=np.mean
-                                    )
-    # Convert 'params' back to dict
-    mean_results_cv.reset_index(level='params', inplace=True)
-    mean_results_cv['params'] = mean_results_cv['params'].apply(lambda x: ast.literal_eval(x)) 
-    mean_results_cv.sort_values('validation score', ascending=False, inplace=True)
-    return mean_results_cv
+
+    splitter = TimeSeriesSplit(n_splits=n_splits)
+    g = GridSearchCV(
+        estimator=estimator,
+        param_grid=param_grid,
+        scoring=scoring,
+        cv=splitter,
+        refit=True,
+        verbose=1,
+        n_jobs=-1,
+        error_score="raise",
+    )
+    g.fit(X_train, Y_train)
+    print("\n" + " Cross_validation finished ".center(120, "-"))
+    return g
+
+
+def pca(data, columns=[], excl_cols=[], n_components=10, plot_explained_var=True):
+    if not columns:
+        columns = data.columns
+    columns = [
+        c
+        for c in columns
+        if c in data.columns
+        and c not in excl_cols
+        and pd.api.types.is_numeric_dtype(data[c])
+    ]
+    pca_ = PCA(n_components=n_components)
+    pca_.fit(data[columns])
+    if plot_explained_var:
+        plt.style.use("seaborn-darkgrid")
+        expl_variance = [0]
+        for i in range(n_components):
+            expl_variance.append(expl_variance[i] + pca_.explained_variance_ratio_[i])
+        plt.plot(range(n_components + 1), expl_variance)
+    return pca_
+
+
+def vif_analysis(data, columns=[], excl_cols=[], threshold=10):
+    if not columns:
+        columns = data.columns
+    columns = [
+        c
+        for c in columns
+        if c in data.columns
+        and c not in excl_cols
+        and pd.api.types.is_numeric_dtype(data[c])
+    ]
+
+    excl_columns_vif = {}
+    data_vif = data[columns]
+    data_vif = data_vif.dropna()
+    n_cols = len(data_vif.columns)
+    print(" VIF analysis starting: {:d} features ".format(n_cols).center(120, "-"))
+
+    while True:
+        if n_cols <= 1:
+            print(" VIF analysis stopped: only one feature remaining ".center(120, "-"))
+            vif_final = pd.DataFrame({"features": data_vif.columns, "vif": [None]})
+            break
+        vif_values = [
+            variance_inflation_factor(data_vif.values, i)
+            for i in range(data_vif.shape[1])
+        ]
+        max_vif_idx = np.argmax(vif_values)
+        max_vif_value = vif_values[max_vif_idx]
+        if max_vif_value <= threshold:
+            vif_final = pd.DataFrame({"features": data_vif.columns, "vif": vif_values})
+            break
+        max_vif_feature = data_vif.columns[max_vif_idx]
+        excl_columns_vif[max_vif_feature] = max_vif_value
+        data_vif.drop(columns=[max_vif_feature], inplace=True)
+        n_cols -= 1
+
+    print(" VIF analysis succesfully completed ".center(120, "-"))
+    print("remaining features: {:d}".format(n_cols))
+    print("excluded features: {:d}".format(len(excl_columns_vif)))
+    return vif_final, excl_columns_vif
