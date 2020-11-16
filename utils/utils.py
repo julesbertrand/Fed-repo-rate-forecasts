@@ -37,11 +37,13 @@ def open_file(path, sep=";"):
 
 
 def open_files(path, file_names):
+    if path[-1] != "/":
+        path += "/"
     if isinstance(file_names, str):
-        return open_file(path, file_names)
+        return open_file(path + file_names)
     f_dict = {}
     for f_name in file_names:
-        f_dict[f_name] = open_file(path, f_name)
+        f_dict[f_name] = open_file(path + f_name)
     return f_dict
 
 
