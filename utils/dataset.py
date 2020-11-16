@@ -4,15 +4,13 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import StandardScaler
 
 # Dickey-fuller test for stationarity of a series
 from statsmodels.tsa.stattools import adfuller
 
 # seasonal decomposition of a signal (trend, seasonal, residuals)
 from statsmodels.tsa.seasonal import seasonal_decompose
-
-from statsmodels.stats.outliers_influence import variance_inflation_factor
-from sklearn.preprocessing import StandardScaler
 
 if not __name__ == "__main__":
     from utils.visualization import *
@@ -372,45 +370,6 @@ class Dataset:
             )
         return df_trend, df_seas, df_resid
 
-    def vif_analysis(self, columns=[], excl_cols=[], threshold=10):
-        columns = self.__check_cols(columns=columns, excl_cols=excl_cols)
-
-        excl_columns_vif = {}
-        data_vif = self.data[columns]
-        data_vif = data_vif.dropna()
-        n_cols = len(data_vif.columns)
-        print(" VIF analysis starting: {:d} features ".format(n_cols).center(120, "-"))
-
-        while True:
-            if n_cols <= 1:
-                print(
-                    " VIF analysis stopped: only one feature remaining ".center(
-                        120, "-"
-                    )
-                )
-                vif_final = pd.DataFrame({"features": data_vif.columns, "vif": [None]})
-                break
-            vif_values = [
-                variance_inflation_factor(data_vif.values, i)
-                for i in range(data_vif.shape[1])
-            ]
-            max_vif_idx = np.argmax(vif_values)
-            max_vif_value = vif_values[max_vif_idx]
-            if max_vif_value <= threshold:
-                vif_final = pd.DataFrame(
-                    {"features": data_vif.columns, "vif": vif_values}
-                )
-                break
-            max_vif_feature = data_vif.columns[max_vif_idx]
-            excl_columns_vif[max_vif_feature] = max_vif_value
-            data_vif.drop(columns=[max_vif_feature], inplace=True)
-            n_cols -= 1
-
-        print(" VIF analysis succesfully completed ".center(120, "-"))
-        print("remaining features: {:d}".format(n_cols))
-        print("excluded features: {:d}".format(len(excl_columns_vif)))
-        return vif_final, excl_columns_vif
-
     def shift_features(self, row_shifts=(1), columns=[], excl_cols=[], inplace=False):
         columns = self.__check_cols(columns=columns, excl_cols=excl_cols)
 
@@ -445,7 +404,7 @@ class Dataset:
         else:  # not X_cols means Y_cols is not None
             self.X = self.data.drop(columns=Y_cols)
         if not test_date:
-            test_date_idx = int(len(self.X) * test_size)
+            test_date_idx = int(len(self.X) * (1 - test_size))
             test_date = self.X[self.date_col].iloc[test_date_idx]
         X_train = self.X.loc[self.X[self.date_col] < test_date]
         X_test = self.X.loc[self.X[self.date_col] >= test_date]
@@ -454,9 +413,7 @@ class Dataset:
         if standardize:
             scaler = StandardScaler()
             cols = [
-                c
-                for c in self.X.columns
-                if c in self._features_info["numeric features"]
+                c for c in self.X.columns if pd.api.types.is_numeric_dtype(self.X[c])
             ]
             X_train.loc[:, cols] = scaler.fit_transform(X_train[cols])
             X_test.loc[:, cols] = scaler.transform(X_test[cols])
