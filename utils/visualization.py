@@ -24,7 +24,7 @@ def visualization_grid(give_grid_to_subplot_function=False):
 
             # remove excluded items
             items = filter(lambda x: x not in excl_items and x != date_col, items)
-            items = list(map(str, items))
+            items = list(items)
 
             # Create the grid
             n_items = len(items)
@@ -73,7 +73,10 @@ def visualization_grid(give_grid_to_subplot_function=False):
                 }
             else:
                 if subplot_titles_suffix is None:
-                    subplot_titles = {item: item.replace("_", " ") for item in items}
+                    if isinstance(items[0], str):
+                        subplot_titles = {item: item.replace("_", " ") for item in items}
+                    else:
+                        subplot_titles = {}
                 elif isinstance(subplot_titles_suffix, str):
                     subplot_titles = {
                         item: (item + ", " + subplot_titles_suffix).replace("_", " ")
@@ -105,7 +108,7 @@ def visualization_grid(give_grid_to_subplot_function=False):
                     for ax in fig.axes[ax_pos:]:
                         # set x lim and ticks for all subplots created by the subplot function
                         ax.set_xlim(left=min_x, right=max_x)
-                        ax.tick_params(labelsize=text_font_size)
+                        ax.tick_params(labelsize=text_font_size - 2)
                     if not fig.axes[ax_pos].get_title():
                         # Set title for first ax created in given grid_pos if none has been given
                         fig.axes[ax_pos].set_title(
