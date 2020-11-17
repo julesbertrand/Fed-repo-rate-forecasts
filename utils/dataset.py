@@ -18,6 +18,27 @@ if not __name__ == "__main__":
 
 
 class Dataset:
+    """
+    Class to preprocess and wrangle the data, select features, and save dataset with Train/test sets
+    Methods:
+        __init__
+        drop: drop columns from dataset
+        del_rows: delete rows from dataset
+        __check_cols: check if columns exists in dataset and are valid
+        preprocess: add pct_change data if wanted, open features_info yaml to now what features are cat, num etc
+        visualize_features: use utils.visualization.visualiza_features to plot all chosen variables from dataset
+        dickey_fuller_test: perform an Augmented Dickey Fuller test for stationarity on a chosen subset of the dataset using statsmodels adfuller
+        visualize_stationarity: visualize the rolling mean and std of alongised with the test results
+        remove_non_stationary_features: remove non stationary features at the given confidence level (1%, 5%, or 10%)
+        test_stationarity: DF test + visualize stationarity
+        seasonal_decomposition: use statsmodels seasonal_decompose to get the trend ,seasonality and residuals for chosen variables
+        visualize_seasonality: plot of original variable, trend, seasonality and residuals
+        remove_seasonality: given a threshold, will remove seasonality from variable when it is above the threshold
+        test_seasonality: seasonal_decomposition + visualize_seasonality
+        shift_features: shift features for a given number of rows (i.e. time units) to get features at t-i on row t
+        train_test_split_dates: train test split with standardisation available
+        save_dataset: will save X_train, Y_train, X_test, Y_test in csv and the current dataset parameters in yaml in the chosen dir         
+    """
     def __init__(
         self,
         path,
@@ -73,6 +94,11 @@ class Dataset:
         self.data = new_data
 
     def __check_cols(self, columns: list, excl_cols: list) -> list:
+        """
+        Check that columns is a list
+        Filters excl columns and columns not in dataset
+        Check it is not empty
+        """
         if not isinstance(columns, list):
             raise TypeError(
                 "Invalid input: columns must be a list of columns names in data"
@@ -89,12 +115,13 @@ class Dataset:
         return columns
 
     def preprocess(
-        self, path, sep=";", include_pct_change=False, encode_categorical=False
+        self, path, sep=";", include_pct_change:bool=False, encode_categorical:bool=False
     ):
         """
+        Date col to datetime if provided
+        Add _cpt_change data from path if wanted and the file exists
         Categorical to numbers
-        create X and Y sets
-        remove unuseful columns
+        Removes excluded columns from dataset
         """
         if self.date_col:
             self.data[self.date_col] = pd.to_datetime(self.data[self.date_col])
@@ -131,6 +158,15 @@ class Dataset:
         height_per_ax=2,
         subplot_titles_suffix=None,
     ):
+        """
+        Given current dataset and columns to plot, will show a pyplot graph with all columns plot
+        Input: columns: iterable, names of columns to plot. If empty, will take all data columns
+                excl_columns: columns to exclude from the plot in data
+                ncols: number of plots per row
+                height_per_ax: height of one subplot in the pyplot grid object
+                subplot_title_suffix: str, list or dict of subplot titles to add to the columns name (e.g. units)
+        Output: None, and shows graph
+        """
         columns = self.__check_cols(columns=columns, excl_cols=excl_cols)
         visualize_features(
             data=self.data,
@@ -147,7 +183,10 @@ class Dataset:
         columns=[],
         excl_cols=[],
     ):
-        """ Perfoms Dickey-Fuller test for feature stationarity """
+        """ 
+        Perform Augmented Dickey Fuller test for stationarity 
+        on a chosen subset of the dataset using statsmodels adfuller
+        """
         columns = self.__check_cols(columns=columns, excl_cols=excl_cols)
 
         res_tests = {}
@@ -166,6 +205,18 @@ class Dataset:
         height_per_ax=2,
         subplot_titles_suffix=None,
     ):
+        """
+        Given current dataset and columns to plot, will show a pyplot graph with data, rolling mean and rolling std of data
+        If adfuller_results is provided, can plot it on the graph to know what variable is stationary
+        Input: columns: iterable, names of columns to plot. If empty, will take all data columns
+                excl_columns: columns to exclude from the plot in data
+                ncols: number of plots per row
+                height_per_ax: height of one subplot in the pyplot grid object
+                subplot_title_suffix: str, list or dict of subplot titles to add to the columns name (e.g. units)
+                adfuller_results: output of statsmodels.tsa.stattools.adfuller (DickeyFuller test for stationarity)
+                plot_test_results: if True and adfuller_results provided, will print a box on each subplot with results of the test
+        Output: None, and ahows graph
+        """
         columns = self.__check_cols(columns=columns, excl_cols=excl_cols)
         visualize_stationarity(
             data=self.data,
@@ -184,8 +235,9 @@ class Dataset:
     ):
         """
         Remove non stationary columns and keep one among a feature and its % change
-        Input: data,
-            stat_results: dict with boolean for each column giving stationarity
+        Input: columns, excl_cols: varibles included/excluded
+            adfuller_results: dict with dickey_fuller_test results
+            stat_conf_level: confidence level at which a variable is considered stationary.
         Ouput: data with either col_name if feature was stationary, or col_name_pct_change otherwise
         """
         if stat_conf_level is not None and stat_conf_level not in ("1%", "5%", "10%"):
@@ -241,6 +293,9 @@ class Dataset:
         height_per_ax=2,
         subplot_titles_suffix=None,
     ):
+        """
+        dickey_fuller_test + visualize_stationarity
+        """
         # columns = self.__check_cols(columns=columns, excl_cols=excl_cols)
 
         res_tests = self.dickey_fuller_test(columns=columns)
@@ -256,6 +311,10 @@ class Dataset:
         return res_tests
 
     def seasonal_decomposition(self, columns=[], excl_cols=[]):
+        """
+        Perform statsmodels seasonal_decompose on chosen variables 
+        Output: 3 DataFrame with trends, seasonality adn residuals for each analyzed variable
+        """
         columns = self.__check_cols(columns=columns, excl_cols=excl_cols)
 
         df_trend = pd.DataFrame(index=self.data[self.date_col])
@@ -361,6 +420,13 @@ class Dataset:
         return df_trend, df_seas, df_resid
 
     def shift_features(self, row_shifts=(1), columns=[], excl_cols=[], inplace=False):
+        """
+        Input: columns, excl_cols: variables included/excluded
+                row_shifts: tuple of numbers representing the number of rows each selected variable will be shifted of
+                    e.g.: (1, 2, 3) will give feature_t-1, feature_t-2, feature_t-3
+                inplace: if inplace, added to self.data. else, returns the DataFrame with shifted features
+        Output: depends on inplace argument
+        """
         columns = self.__check_cols(columns=columns, excl_cols=excl_cols)
 
         data_shifted = pd.DataFrame(index=self.data.index)
@@ -377,6 +443,14 @@ class Dataset:
     def train_test_split_dates(
         self, X_cols=[], Y_cols=[], test_date=None, test_size=0.2, standardize=True
     ):
+        """
+        Train test split from sklearn
+        Input: X_cols, Y_cols: cannot be both empty, but if one is, then the other will be self.data.columns - non empty one
+                test_date: replaces test_size if need to split on a specidif date in date_col
+                test_size: test set size from 0 to 1, default .2
+                standardize: if True, will standardize data (fit on X_train only)
+        Output: X_train, X_test, Y_train, y_test
+        """
         if not self.date_col:
             raise ValueError(
                 "Not date column in data was defined. Please define one first"
@@ -416,6 +490,7 @@ class Dataset:
     def save_dataset(
         self, X_train, Y_train, X_test, Y_test, path="./Models", replace=False
     ):
+        """ Save train and test set with params in path """
         files = [X_train, Y_train, X_test, Y_test, self._params]
         file_names = ["X_train.csv", "Y_train.csv", "X_test.csv", "Y_test.csv"]
         file_names.append("params.yaml")

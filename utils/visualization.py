@@ -222,7 +222,7 @@ def visualize_stationarity(
             height_per_ax: height of one subplot in the pyplot grid object
             subplot_title_suffix: str, list or dict of subplot titles to add to the columns name (e.g. units)
             adfuller_results: output of statsmodels.tsa.stattools.adfuller (DickeyFuller test for stationarity)
-            print_test_results: if True and adfuller_results provided, will print a bow on each subplot with results of the test
+            plot_test_results: if True and adfuller_results provided, will print a box on each subplot with results of the test
     Output: None, and ahows graph
     """
     if adfuller_results is None:
@@ -286,8 +286,8 @@ def stationarity_subplot(
             data: pandas DataFrame, data to plot
             date_col: str, name of the date column if there is one, to be used for x-axis
             adfuller_results: output of statsmodels.tsa.stattools.adfuller (DickeyFuller test for stationarity)
-            print_test_results: if True and adfuller_results provided, will print a bow on each subplot with results of the test
-            txt_box_props: params for the bow where the test results will be printed
+            plot_test_results: if True and adfuller_results provided, will print a box on each subplot with results of the test
+            txt_box_props: params for the box where the test results will be printed
             num_format: what format to print the numbers for the test results
             text_font_size: axes font size, overwritten by the visualization grid.
     Output: None
