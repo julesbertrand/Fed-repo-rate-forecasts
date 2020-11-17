@@ -150,27 +150,17 @@ class Dataset:
         """ Perfoms Dickey-Fuller test for feature stationarity """
         columns = self.__check_cols(columns=columns, excl_cols=excl_cols)
 
-        res_tests = pd.DataFrame(
-            columns=[
-                "Test Statistic",
-                "p-value",
-                "# Lags used",
-                "# Obs used",
-                "Critical Value 1%",
-                "Critical Value 5%",
-                "Critical Value 10%",
-            ]
-        )
+        res_tests = {}
         for col_name in columns:
             res = adfuller(self.data[col_name].dropna(), autolag="AIC")
-            res_tests.loc[col_name] = list(res[:4]) + list(res[4].values())
+            res_tests[col_name] = res
         return res_tests
 
     def visualize_stationarity(
         self,
         columns=[],
         excl_cols=[],
-        addfuller_results=None,
+        adfuller_results=None,
         plot_test_results=False,
         ncols=3,
         height_per_ax=2,
@@ -185,12 +175,12 @@ class Dataset:
             ncols=ncols,
             height_per_ax=height_per_ax,
             subplot_titles_suffix=subplot_titles_suffix,
-            addfuller_results=addfuller_results,
+            adfuller_results=adfuller_results,
             plot_test_results=plot_test_results,
         )
 
     def remove_non_stationary_features(
-        self, addfuller_results, stat_conf_level="1%", columns=[], excl_cols=[]
+        self, adfuller_results, stat_conf_level="1%", columns=[], excl_cols=[]
     ):
         """
         Remove non stationary columns and keep one among a feature and its % change
@@ -203,22 +193,21 @@ class Dataset:
                 "Invalid Argument: stat_conf_level must either None or one of '1%', '5%', '10%'"
             )
         if not columns:
-            columns = list(addfuller_results.index)
+            columns = list(adfuller_results.keys())
         else:
-            columns = list(filter(lambda x: x in addfuller_results.index, columns))
+            columns = list(filter(lambda x: x in adfuller_results.keys(), columns))
         columns = self.__check_cols(columns=columns, excl_cols=excl_cols)
 
         non_existing_cols = []
         dropped_cols = []
         kept_cols = []
         conf_level = "Critical Value {:s}".format(stat_conf_level)
-        stat_results = addfuller_results.apply(
-            lambda x: x["Test Statistic"] < x[conf_level], axis=1
-        )
         for col_name in columns:
             try:
-                if col_name + "_pct_change" in addfuller_results.keys():
-                    if not stat_results[col_name]:
+                res = adfuller_results[col_name]
+                if col_name + "_pct_change" in adfuller_results.keys():
+                    if res[0] > res[4][stat_conf_level]:
+                        # test statistic greater than critical value at chosen confidence level
                         self.data.drop(columns=[col_name], inplace=True)
                         kept_cols.append(col_name + "_pct_change")
                         dropped_cols.append(col_name)
@@ -227,7 +216,8 @@ class Dataset:
                         kept_cols.append(col_name)
                         dropped_cols.append(col_name + "_pct_change")
                 else:
-                    if not stat_results[col_name]:
+                    if res[0] > res[4][stat_conf_level]:
+                        # test statistic greater than critical value at chosen confidence level
                         self.data.drop(columns=[col_name], inplace=True)
                         dropped_cols.append(col_name)
             except KeyError:
@@ -257,7 +247,7 @@ class Dataset:
         self.visualize_stationarity(
             columns=columns,
             excl_cols=excl_cols,
-            addfuller_results=res_tests,  # will plot text on graphs
+            adfuller_results=res_tests,  # will plot text on graphs
             plot_test_results=plot_test_results,
             ncols=ncols,
             height_per_ax=height_per_ax,
