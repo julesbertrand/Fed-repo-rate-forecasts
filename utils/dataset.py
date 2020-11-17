@@ -37,8 +37,9 @@ class Dataset:
         test_seasonality: seasonal_decomposition + visualize_seasonality
         shift_features: shift features for a given number of rows (i.e. time units) to get features at t-i on row t
         train_test_split_dates: train test split with standardisation available
-        save_dataset: will save X_train, Y_train, X_test, Y_test in csv and the current dataset parameters in yaml in the chosen dir         
+        save_dataset: will save X_train, Y_train, X_test, Y_test in csv and the current dataset parameters in yaml in the chosen dir
     """
+
     def __init__(
         self,
         path,
@@ -115,7 +116,11 @@ class Dataset:
         return columns
 
     def preprocess(
-        self, path, sep=";", include_pct_change:bool=False, encode_categorical:bool=False
+        self,
+        path,
+        sep=";",
+        include_pct_change: bool = False,
+        encode_categorical: bool = False,
     ):
         """
         Date col to datetime if provided
@@ -183,8 +188,8 @@ class Dataset:
         columns=[],
         excl_cols=[],
     ):
-        """ 
-        Perform Augmented Dickey Fuller test for stationarity 
+        """
+        Perform Augmented Dickey Fuller test for stationarity
         on a chosen subset of the dataset using statsmodels adfuller
         """
         columns = self.__check_cols(columns=columns, excl_cols=excl_cols)
@@ -312,7 +317,7 @@ class Dataset:
 
     def seasonal_decomposition(self, columns=[], excl_cols=[]):
         """
-        Perform statsmodels seasonal_decompose on chosen variables 
+        Perform statsmodels seasonal_decompose on chosen variables
         Output: 3 DataFrame with trends, seasonality adn residuals for each analyzed variable
         """
         columns = self.__check_cols(columns=columns, excl_cols=excl_cols)
