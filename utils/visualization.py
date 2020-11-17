@@ -7,18 +7,39 @@ import seaborn as sns
 
 # decorator
 def visualization_grid(give_grid_to_subplot_function=False):
+    """
+    Decorator to create a grid for graphs.
+    Graphs will be printed by the subplot function to which the decorator is applied.
+    Input: give_grid__to_subplot_function: if True, the position of the graph will be given as a grid position in the figure.
+                                            if False, it will be given as a pyplot ax object to plot on.
+    Output: None, and shows graph
+    """
+
     def inner_function(subplot_function):
         def wrapper(
             data,
-            date_col=None,
+            date_col: str = None,
             items=None,
             excl_items=[],
-            ncols=3,
-            height_per_ax=3,
+            ncols: int = 3,
+            height_per_ax: int = 3,
             subplot_titles_suffix=None,
-            fig_title=None,
-            subplot_params={},
+            fig_title: str = "",
+            subplot_params: dict = {},
         ):
+            """
+            Creates the grid
+            Input: data: data to be plot
+                    items: items in data to be plot(columns, models, etc)
+                    date_col: str, name of the date column if there is one, to be used for x-axis
+                    excl_items: items to be excluded
+                    ncols: number of graphs per row
+                    height_per_ax: height of graphs in the grid, must be an int
+                    subplot_titles_suffix: title of each subplot. can be a dict {item: title}, a list, a str
+                    fig_title: title of the whole plot
+                    subplot_params: params to pass to the subplot function
+            Output: None, and shows graph
+            """
             if items is None:
                 items = data.columns
 
@@ -74,7 +95,9 @@ def visualization_grid(give_grid_to_subplot_function=False):
             else:
                 if subplot_titles_suffix is None:
                     if isinstance(items[0], str):
-                        subplot_titles = {item: item.replace("_", " ") for item in items}
+                        subplot_titles = {
+                            item: item.replace("_", " ") for item in items
+                        }
                     else:
                         subplot_titles = {}
                 elif isinstance(subplot_titles_suffix, str):
@@ -145,6 +168,18 @@ def visualize_features(
     height_per_ax=2,
     subplot_titles_suffix=None,
 ):
+    """
+    Given data and columns to plot, will show a pyplot graph with all columns plot
+    Input: data: pandas DataFrame, data to plot
+            date_col: str, name of the date column if there is one, to be used for x-axis
+            columns: iterable, names of columns to plot. If empty, will take all data columns
+            excl_columns: columns to exclude from the plot in data
+            ncols: number of plots per row
+            height_per_ax: height of one subplot in the pyplot grid object
+            subplot_title_suffix: str, list or dict of subplot titles to add to the columns name (e.g. units)
+    Output: None, and ahows graph
+    """
+
     @visualization_grid(give_grid_to_subplot_function=False)
     def visualize_features_subplot(ax, col_name, data, date_col, text_font_size=10):
         if date_col is not None:
@@ -173,73 +208,40 @@ def visualize_stationarity(
     ncols=3,
     height_per_ax=2,
     subplot_titles_suffix=None,
-    addfuller_results=None,
+    adfuller_results=None,
     plot_test_results=True,
 ):
-    if addfuller_results is None:
+    """
+    Given data and columns to plot, will show a pyplot graph with data, rolling mean and rolling std of data
+    If adfuller_results is provided, can plot it on the graph to know what variable is stationary
+    Input: data: pandas DataFrame, data to plot
+            date_col: str, name of the date column if there is one, to be used for x-axis
+            columns: iterable, names of columns to plot. If empty, will take all data columns
+            excl_columns: columns to exclude from the plot in data
+            ncols: number of plots per row
+            height_per_ax: height of one subplot in the pyplot grid object
+            subplot_title_suffix: str, list or dict of subplot titles to add to the columns name (e.g. units)
+            adfuller_results: output of statsmodels.tsa.stattools.adfuller (DickeyFuller test for stationarity)
+            print_test_results: if True and adfuller_results provided, will print a bow on each subplot with results of the test
+    Output: None, and ahows graph
+    """
+    if adfuller_results is None:
         plot_test_results = False
-
-    @visualization_grid(give_grid_to_subplot_function=False)
-    def stationarity_subplot(
-        ax,
-        col_name,
-        data,
-        date_col,
-        plot_test_results,
-        addfuller_results,
-        txt_box_props={},
-        num_format="{:.1f}",
-        text_font_size=10,
-    ):
-        col = data[col_name].dropna()
-        # Compute rolling statistics
-        rol_mean = col.rolling(window=12, min_periods=1).mean()
-        rol_std = col.rolling(window=12, min_periods=1).std()
-        # Plot rolling statistics
-        if date_col is not None:
-            # adjusting dates because of drop_na step
-            date_col_temp = data[date_col].loc[col.index]
-            ax.plot(
-                date_col_temp,
-                col,
-                color=sns.color_palette()[0],
-                alpha=0.8,
-                label="Original",
-            )
-            ax.plot(
-                date_col_temp,
-                rol_mean,
-                color=sns.color_palette()[3],
-                label="Rolling Mean",
-            )
-            ax.plot(
-                date_col_temp,
-                rol_std,
-                color=sns.color_palette()[2],
-                label="Rolling Std",
-            )
-        else:
-            ax.plot(col, color=sns.color_palette()[0], alpha=0.9, label="Original")
-            ax.plot(rol_mean, color=sns.color_palette()[3], label="Rolling Mean")
-            ax.plot(rol_std, color=sns.color_palette()[2], label="Rolling Std")
-        # plot text box with Dickey-fuller test results
-        if plot_test_results:
-            res_test = addfuller_results.loc[col_name]
-            text_str = "DF test results".center(25, " ") + "\n"
-            text_str += "\n".join(
-                (
-                    "{:20}".format(idx + ":") + "{: >5.2f}".format(res_test[idx])
-                    for idx in res_test.index
-                )
-            )
-            ax.text(
-                0.03,
-                0.5,
-                text_str,
-                fontsize=text_font_size - 2,
-                bbox=txt_box_props,
-                transform=ax.transAxes,
-            )
+    else:
+        temp = pd.DataFrame(
+            columns=[
+                "Test Statistic",
+                "p-value",
+                "# Lags used",
+                "# Obs used",
+                "Critical Value 1%",
+                "Critical Value 5%",
+                "Critical Value 10%",
+            ]
+        )
+        for col_name, res in adfuller_results.items():
+            temp.loc[col_name] = list(res[:4]) + list(res[4].values())
+        adfuller_results = temp
 
     txt_box_props = dict(
         boxstyle="round", alpha=0.8, facecolor="#EAEAF2", edgecolor="#EAEAF2"
@@ -259,10 +261,86 @@ def visualize_stationarity(
             "data": data,
             "date_col": date_col,
             "txt_box_props": txt_box_props,
-            "addfuller_results": addfuller_results,
+            "adfuller_results": adfuller_results,
             "plot_test_results": plot_test_results,
         },
     )
+
+
+@visualization_grid(give_grid_to_subplot_function=False)
+def stationarity_subplot(
+    ax,
+    col_name,
+    data,
+    date_col,
+    plot_test_results,
+    adfuller_results,
+    txt_box_props={},
+    num_format="{:.1f}",
+    text_font_size=10,
+):
+    """
+    Subplot function for stationarity visualization
+    Input: ax: plt.axes object where to plot
+            col_name: column to be plot name
+            data: pandas DataFrame, data to plot
+            date_col: str, name of the date column if there is one, to be used for x-axis
+            adfuller_results: output of statsmodels.tsa.stattools.adfuller (DickeyFuller test for stationarity)
+            print_test_results: if True and adfuller_results provided, will print a bow on each subplot with results of the test
+            txt_box_props: params for the bow where the test results will be printed
+            num_format: what format to print the numbers for the test results
+            text_font_size: axes font size, overwritten by the visualization grid.
+    Output: None
+    """
+    col = data[col_name].dropna()
+    # Compute rolling statistics
+    rol_mean = col.rolling(window=12, min_periods=1).mean()
+    rol_std = col.rolling(window=12, min_periods=1).std()
+    # Plot rolling statistics
+    if date_col is not None:
+        # adjusting dates because of drop_na step
+        date_col_temp = data[date_col].loc[col.index]
+        ax.plot(
+            date_col_temp,
+            col,
+            color=sns.color_palette()[0],
+            alpha=0.8,
+            label="Original",
+        )
+        ax.plot(
+            date_col_temp,
+            rol_mean,
+            color=sns.color_palette()[3],
+            label="Rolling Mean",
+        )
+        ax.plot(
+            date_col_temp,
+            rol_std,
+            color=sns.color_palette()[2],
+            label="Rolling Std",
+        )
+    else:
+        ax.plot(col, color=sns.color_palette()[0], alpha=0.9, label="Original")
+        ax.plot(rol_mean, color=sns.color_palette()[3], label="Rolling Mean")
+        ax.plot(rol_std, color=sns.color_palette()[2], label="Rolling Std")
+    # plot text box with Dickey-fuller test results
+    if plot_test_results:
+        res_test = adfuller_results.loc[col_name]
+        text_str = "DF test results".center(25, " ") + "\n"
+        text_str += "\n".join(
+            (
+                "{:20}".format(idx + ":") + "{: >5.2f}".format(res_test[idx])
+                for idx in res_test.index
+            )
+        )
+        ax.text(
+            0.03,
+            0.5,
+            text_str,
+            fontsize=text_font_size - 2,
+            bbox=txt_box_props,
+            transform=ax.transAxes,
+        )
 
 
 def visualize_seasonality(
@@ -277,45 +355,20 @@ def visualize_seasonality(
     height_per_ax=2,
     subplot_titles_suffix=None,
 ):
-    @visualization_grid(give_grid_to_subplot_function=False)
-    def seasonality_subplot(
-        ax,
-        col_name,
-        df_original,
-        date_col,
-        df_trend,
-        df_seas,
-        df_resid,
-        text_font_size=10,
-    ):
-        # Plot decomposition
-        ax.plot(
-            df_original[date_col],
-            df_original[col_name],
-            color=sns.color_palette()[0],
-            alpha=0.9,
-            label="Original values",
-        )
-        ax.plot(
-            df_original[date_col],
-            df_resid[col_name + "_residual"],
-            color=sns.color_palette()[2],
-            label="Residuals",
-        )
-        ax.plot(
-            df_original[date_col],
-            df_seas[col_name + "_seasonal"],
-            color=sns.color_palette()[1],
-            label="Seasonality",
-        )
-        ax.plot(
-            df_original[date_col],
-            df_trend[col_name + "_trend"],
-            color=sns.color_palette()[3],
-            label="Trend",
-        )
-        ax.legend(loc="best", ncol=2, fontsize=text_font_size - 2)
-
+    """
+    Visualize the seasonality, trend and residuals of your variables
+    Input: data: pandas DataFrame, data to plot
+            df_trend: same as data with trends
+            df_seas: same as data with seasonality values
+            df_resid: same as data with residuels values
+            date_col: str, name of the date column if there is one, to be used for x-axis
+            columns: iterable, names of columns to plot. If empty, will take all data columns
+            excl_columns: columns to exclude from the plot in data
+            ncols: number of plots per row
+            height_per_ax: height of one subplot in the pyplot grid object
+            subplot_title_suffix: str, list or dict of subplot titles to add to the columns name (e.g. units)
+    Output: None
+    """
     fig_title = "Feature seasonality: Original, trend, seasonality and noise"
     seasonality_subplot(
         data=data,
@@ -334,3 +387,55 @@ def visualize_seasonality(
             "df_resid": df_resid,
         },
     )
+
+
+@visualization_grid(give_grid_to_subplot_function=False)
+def seasonality_subplot(
+    ax,
+    col_name,
+    df_original,
+    date_col,
+    df_trend,
+    df_seas,
+    df_resid,
+    text_font_size=10,
+):
+    """
+    Subplot function for stationarity visualization
+    Input: ax: plt.axes object where to plot
+            col_name: column to be plot name
+            df_original: pandas DataFrame, data to plot
+            date_col: str, name of the date column if there is one, to be used for x-axis
+            df_trend: same as df_original with trends
+            df_seas: same as df_original with seasonality values
+            df_resid: same as df_original with residuels values
+            text_font_size: axes font size, overwritten by the visualization grid.
+    Output: None
+    """
+    # Plot decomposition
+    ax.plot(
+        df_original[date_col],
+        df_original[col_name],
+        color=sns.color_palette()[0],
+        alpha=0.9,
+        label="Original values",
+    )
+    ax.plot(
+        df_original[date_col],
+        df_resid[col_name + "_residual"],
+        color=sns.color_palette()[2],
+        label="Residuals",
+    )
+    ax.plot(
+        df_original[date_col],
+        df_seas[col_name + "_seasonal"],
+        color=sns.color_palette()[1],
+        label="Seasonality",
+    )
+    ax.plot(
+        df_original[date_col],
+        df_trend[col_name + "_trend"],
+        color=sns.color_palette()[3],
+        label="Trend",
+    )
+    ax.legend(loc="best", ncol=2, fontsize=text_font_size - 2)
