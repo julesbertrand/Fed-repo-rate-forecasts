@@ -8,10 +8,10 @@ import joblib
 import yaml
 
 
-def get_file_names(path="Data/", extension=".csv"):
+def get_file_names(dir_path="Data/", extension=".csv"):
     """
     Retrieve all data files names in a directory
-    input: path
+    input: path to directory, extension of files to retrieve
     output: list of file names
     """
     temp = glob(path + "/*" + extension)
@@ -23,6 +23,10 @@ def get_file_names(path="Data/", extension=".csv"):
 
 
 def open_file(path, sep=";"):
+    """
+    Open the file given its complete path.
+    pandas red_csv if csv, yaml if yaml, joblib otherwise
+    """
     _, extension = path.rsplit(".", 1)
     if not os.path.exists(path):
         raise FileNotFoundError(path)
@@ -36,7 +40,12 @@ def open_file(path, sep=";"):
     return f
 
 
-def open_files(path, file_names):
+def open_files(path, file_names: list) -> dict:
+    """
+    Open the files given their common path and all files names to retrieve.
+    pandas red_csv if csv, yaml if yaml, joblib otherwise
+    Ouput: dict file_name : file_object
+    """
     if path[-1] != "/":
         path += "/"
     if isinstance(file_names, str):
@@ -47,7 +56,15 @@ def open_files(path, file_names):
     return f_dict
 
 
-def save_file(path, file_name, data, replace=False):
+def save_file(path, file_name: str, data, replace: bool = False):
+    """
+    Save file in directory given by path
+    Input: path: directory where to save the file
+            file_name: str, name to give to the new file
+            data: object to save
+            replace: boolean, whether to overwrite already existing file with save name in same directory
+    If the path does not exist or the file could not be saved, it will tell you
+    """
     if path[-1] != "/":
         path += "/"
     if not os.path.exists(path):
@@ -82,10 +99,13 @@ def save_file(path, file_name, data, replace=False):
         joblib.dump(data, path + file_name, compress=1)
 
 
-def save_files(path, files, replace=False):
+def save_files(path, files: dict, replace: bool = False):
     """
-    files is a dict file_name: file
-    replace = True means that files sith same files_names as the provided ones will be overwritten, carefull
+    Save a bunch of files
+    Input: path: diretory in which the save will be saved
+            files: dict file_name: file object
+            replace: whether to overwrite already existing file with save name in same directory
+    If the path does not exist, then the directory will be created and the files saved in it
     """
     if path[-1] != "/":
         path += "/"
