@@ -8,7 +8,7 @@ import joblib
 import yaml
 
 
-def get_file_names(dir_path="Data/", extension=".csv"):
+def get_file_names(path="Data/", extension=".csv"):
     """
     Retrieve all data files names in a directory
     input: path to directory, extension of files to retrieve
