@@ -46,7 +46,7 @@ Federal funds rate since 1955 (1). Shaded areas correspond to periods of recessi
 
 As mentioned above, the Fed uses macroeconomic and financial indicators to set the repo rate eight times a year. I chose to build as exhaustive a list of indicators as possible, and then reduce the number of characteristics used to build the models. I first looked at what the Fed officially takes into account and I then added some indicators that I thought were relevant. The list of all data series, where they come from, and their dates are listed in the table below.
 
-![Data index table](resources/data_index.png?raw=true)
+![Data index table](resources/data_index.PNG?raw=true)
 
 ## Feature engineering
 ### 1. Stationarity of time-series: Dickey-Fuller test
