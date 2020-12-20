@@ -29,7 +29,7 @@ def cross_validate(
     if len(fixed_params.keys()) > 0:
         print("\n" + " Fixed params: ".center(120, "-"))
         [print(key, value) for key, value in fixed_params.items()]
-    print("\n" + " Params to be tested: ".center(120, "-"))
+    print("\n" + " Params to be cross-validated: ".center(120, "-"))
     [print(key, value) for key, value in cv_params.items()]
     print(
         "\n # of permutations to be cross-validated: {:d} \n # of works: {:d}".format(
