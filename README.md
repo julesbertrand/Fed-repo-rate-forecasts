@@ -14,7 +14,7 @@ This project focuses on the prediction of the effective interest rate managed by
 
 ## Table of Content
 * [Background](#background-and-goal-of-this-project)
-* [Fed Repo rate: What is it?](#fed-repo-rate:-what-is-it?)
+* [What is the Fed repo rate](#what-is-the-fed-repo-rate)
 * [Data](#data)
 * [Feature Engineering](#feature-engineering)
 * [Metrics and Models](#metrics-and-models)
@@ -22,7 +22,7 @@ This project focuses on the prediction of the effective interest rate managed by
 * [Wrapping-up, Insights and Next Steps](#wrapping-up,-insights-and-next-steps)
 
 
-## Fed Repo rate: What is it?
+## What is the Fed repo rate
 
 Everyday, banks are creating money by lending money to people. All these loans are granted with several conditions, including the interest rate, which represents the price at which the bank is willing to lend money to you. The higher the interest rate, the less money you will borrow. 
 
