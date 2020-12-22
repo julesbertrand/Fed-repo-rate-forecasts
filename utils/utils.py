@@ -22,7 +22,7 @@ def get_file_names(path="Data/", extension=".csv"):
     return file_names
 
 
-def open_file(path, sep=";"):
+def open_file(path: str, sep: str = ";"):
     """
     Open the file given its complete path.
     pandas red_csv if csv, yaml if yaml, joblib otherwise
@@ -40,7 +40,7 @@ def open_file(path, sep=";"):
     return f
 
 
-def open_files(path, file_names: list) -> dict:
+def open_files(path: str, file_names: list) -> dict:
     """
     Open the files given their common path and all files names to retrieve.
     pandas red_csv if csv, yaml if yaml, joblib otherwise
@@ -56,7 +56,7 @@ def open_files(path, file_names: list) -> dict:
     return f_dict
 
 
-def save_file(path, file_name: str, data, replace: bool = False):
+def save_file(path: str, file_name: str, data, replace: bool = False):
     """
     Save file in directory given by path
     Input: path: directory where to save the file
@@ -68,7 +68,7 @@ def save_file(path, file_name: str, data, replace: bool = False):
     if path[-1] != "/":
         path += "/"
     if not os.path.exists(path):
-        raise FileNotFoundError
+        raise FileNotFoundError("This path does not exist.")
     file_name, extension = file_name.split(".")
     if replace:
         try:
@@ -99,7 +99,7 @@ def save_file(path, file_name: str, data, replace: bool = False):
         joblib.dump(data, path + file_name, compress=1)
 
 
-def save_files(path, files: dict, replace: bool = False):
+def save_files(path: str, files: dict, replace: bool = False):
     """
     Save a bunch of files
     Input: path: diretory in which the save will be saved
