@@ -37,7 +37,6 @@ class Dataset:
         test_seasonality: seasonal_decomposition + visualize_seasonality
         shift_features: shift features for a given number of rows (i.e. time units) to get features at t-i on row t
         train_test_split_dates: train test split with standardisation available
-        save_dataset: will save X_train, Y_train, X_test, Y_test in csv and the current dataset parameters in yaml in the chosen dir
     """
 
     def __init__(
@@ -69,6 +68,10 @@ class Dataset:
     @property
     def include_pct_change(self):
         return self._params["include_pct_change"]
+
+    @property
+    def params(self):
+        return self.params
 
     @property
     def date_col(self):
@@ -492,11 +495,3 @@ class Dataset:
         self._params["test_size"] = test_size
         return X_train, Y_train, X_test, Y_test
 
-    def save_dataset(
-        self, X_train, Y_train, X_test, Y_test, path="./Models", replace=False
-    ):
-        """ Save train and test set with params in path """
-        files = [X_train, Y_train, X_test, Y_test, self._params]
-        file_names = ["X_train.csv", "Y_train.csv", "X_test.csv", "Y_test.csv"]
-        file_names.append("params.yaml")
-        save_files(path=path, files=dict(zip(file_names, files)), replace=replace)
