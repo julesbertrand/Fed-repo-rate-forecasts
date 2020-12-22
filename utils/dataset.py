@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import datetime as dt
 
 from sklearn.preprocessing import LabelEncoder
 
@@ -61,8 +62,8 @@ class Dataset:
         )
         if self.date_col:
             # not before preprocessing as date_col must be in datetime format
-            self._params["start_date"] = self.data[self.date_col].iloc[0]
-            self._params["end_date"] = self.data[self.date_col].iloc[-1]
+            self._params["start_date"] = self.data[self.date_col].iloc[0].to_pydatetime()
+            self._params["end_date"] = self.data[self.date_col].iloc[-1].to_pydatetime()
 
     @property
     def include_pct_change(self):
