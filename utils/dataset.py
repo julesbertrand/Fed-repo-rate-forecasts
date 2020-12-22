@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 from sklearn.preprocessing import LabelEncoder
-from sklearn.preprocessing import StandardScaler
 
 # Dickey-fuller test for stationarity of a series
 from statsmodels.tsa.stattools import adfuller
@@ -71,7 +70,11 @@ class Dataset:
 
     @property
     def params(self):
-        return self.params
+        return self._params
+
+    @property
+    def columns(self):
+        return self.data.columns
 
     @property
     def date_col(self):
@@ -108,7 +111,7 @@ class Dataset:
                 "Invalid input: columns must be a list of columns names in data"
             )
         if not columns:
-            columns = self.data.columns
+            columns = self.columns
         columns = list(
             filter(lambda x: x != self.date_col and x not in excl_cols, columns)
         )
