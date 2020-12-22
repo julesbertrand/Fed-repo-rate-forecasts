@@ -7,6 +7,16 @@ from sklearn import metrics
 from sklearn.decomposition import PCA
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 
+"""
+Functions:
+cross_validate: cv based on sklearn grid searcgh enhanced for this problem
+pca: perform pca and plot results
+vif_analysis: perform vif_analysis
+regression_metrics: compute regression metrics: r2, MAE, MAPE, RMSE,, MASE 
+classification_metrics: compute classification metrics: accuracy, precision, recall, f1-score, ROC AUc, log loss
+train_test_split: enhanced train test split to account for the dates here, using the scikit-learn one 
+"""
+
 
 def cross_validate(
     X_train, Y_train, estimator, param_grid={}, n_splits=5, scoring=metrics.r2_score
@@ -118,3 +128,60 @@ def vif_analysis(data, columns=[], excl_cols=[], threshold=10):
     print("remaining features: {:d}".format(n_cols))
     print("excluded features: {:d}".format(len(excl_columns_vif)))
     return vif_final, excl_columns_vif
+
+
+def regression_metrics(
+    Y_test,
+    Y_pred,
+    return_series=False,
+):
+    """
+    Compute several different regression metrics (MAE, RMSE, MAPE, ...) from Y_test and predictions
+    """
+    diff = Y_test - Y_pred
+    local_metrics = {
+        r"Test $R^2$": metrics.r2_score(Y_test, Y_pred),
+        "ME": np.mean(diff),
+        "MAE": np.mean(np.abs(diff)),
+        "RMSE": np.sqrt(np.mean(diff ** 2)),
+        "MPE": np.mean(diff / np.mean(Y_test)),
+        # mean absolute percetage error
+        "MAPE": np.mean(np.abs(np.where(Y_test != 0, diff / Y_test, 0))),
+        # mean absolute scaled error
+        "MASE": np.mean(np.abs(diff / np.mean(np.abs(np.diff(Y_test))))),
+    }
+    if return_series:
+        series = {"Abs error": diff, "% error": diff / Y_test}
+        return local_metrics, series
+    return local_metrics
+
+
+def classification_metrics(
+    Y_test,
+    Y_pred,
+    Y_scores,
+    labels=None,
+    return_series=False,
+):
+    """
+    Compute several different clasification metrics (accuracy, F1 score, AUC, ...) from Y_test and predictions
+    """
+    Y_scores = Y_scores.to_list()
+    if labels is None:
+        n_class = Y_scores[0].shape[0]
+        labels = np.arange(-(n_class // 2), n_class // 2 + 1, 1.0)
+    # ovo and labels needed as Y_test does not always contain all classes
+    local_metrics = {
+        "Acc": metrics.accuracy_score(Y_test, Y_pred),
+        "Precision": metrics.precision_score(Y_test, Y_pred, average="weighted"),
+        "Recall": metrics.recall_score(Y_test, Y_pred, average="weighted"),
+        "F1": metrics.f1_score(Y_test, Y_pred, average="weighted"),
+        "ROCAUC": metrics.roc_auc_score(
+            Y_test, Y_scores, multi_class="ovo", average="weighted", labels=labels
+        ),
+        "LOGLOSS": metrics.log_loss(Y_test, Y_scores, labels=labels),
+    }
+    if return_series:
+        series = {"Abs error": diff, "% error": diff / Y_test}
+        return local_metrics, series
+    return local_metrics

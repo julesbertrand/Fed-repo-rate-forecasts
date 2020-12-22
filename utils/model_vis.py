@@ -6,14 +6,16 @@ import seaborn as sns
 
 from scipy.ndimage.interpolation import shift  # plot_model and compute_series_to_plot
 
-from sklearn import metrics
+from sklearn.metrics import r2_score
 from sklearn.base import is_classifier, is_regressor
 
 if not __name__ == "__main__":
     from utils.utils import *
     from utils.visualization import visualization_grid
+    from utils.model_utils import regression_metrics, classification_metrics
 else:
     from visualization import visualization_grid
+    from model_utils import regression_metrics, classification_metrics
 
 
 def plot_models(
@@ -36,11 +38,12 @@ def plot_models(
     if not type_of_change:
         if plotted_feature != predicted_feature:
             plotted_feature = predicted_feature
-            # warning
+            # warning to be implemented
     if not plotted_feature:
         plotted_feature = predicted_feature
 
-    diff = len(estimator_params) - len(estimators)
+    # handle subplot_params missing
+    diff = len(estimators) - len(estimator_params)
     if diff > 0:
         for i in range(diff):
             estimator_params.append({})
@@ -99,13 +102,17 @@ def plot_models(
         )
         return metrics
 
+    fig_title = "Training and Test forecasting performance: '{:s}'".format(
+        plotted_feature.replace("_", " ")
+    )
+
     subplot_model(
         data=Y_train[["Date"]].append(Y_test[["Date"]]),
         date_col="Date",
         items=estimators,
         excl_items=[],
         ncols=1,
-        fig_title="Test plot model",
+        fig_title=fig_title,
         height_per_ax=height_per_ax,
         subplot_params=subplot_params,
     )
@@ -308,6 +315,7 @@ def subplot_model_(
         estimator_name = " + ".join(estimator_names)
         estimator = estimator[-1]
     else:
+        pipe = False
         estimator_name = estimator.__class__.__name__
 
     # compute metrics
@@ -341,77 +349,20 @@ def subplot_model_(
     if plot_metrics:
         list_str = []
         if "reconst" in plot_df_test.columns:
-            rr2 = metrics.r2_score(
-                plot_df_test[plotted_feature], plot_df_test["reconst"]
-            )
+            rr2 = r2_score(plot_df_test[plotted_feature], plot_df_test["reconst"])
             list_str += [r"Reconst $R^2$" + ": {:.4f}".format(rr2)]
         list_str += [
             "{:s}: {:.3f}".format(key, val) for key, val in metrics_test.items()
         ]
         metrics_str = []
+        # handle metrics line width in subplot as a function of ncols
+        idx = len(list_str) // ncols
         for i in range(ncols):
-            # handle metrics line width in subplot as a function of ncols
-            idx = len(list_str) // ncols
             metrics_str += ["  |  ".join(list_str[i * idx : (i + 1) * idx])]
         metrics_str = "\n".join(metrics_str)
         title_str += metrics_str
-    ax_main.set_title(title_str, fontsize=text_font_size)
+    ax_main.set_title(title_str, fontsize=text_font_size + 2)
     return metrics_test
-
-
-def regression_metrics(
-    Y_test,
-    Y_pred,
-    return_series=False,
-):
-    """
-    Compute several different regression metrics (MAE, RMSE, MAPE, ...) from Y_test and predictions
-    """
-    diff = Y_test - Y_pred
-    local_metrics = {
-        r"Test $R^2$": metrics.r2_score(Y_test, Y_pred),
-        "ME": np.mean(diff),
-        "MAE": np.mean(np.abs(diff)),
-        "RMSE": np.sqrt(np.mean(diff ** 2)),
-        "MPE": np.mean(diff / np.mean(Y_test)),
-        "MAPE": np.mean(np.abs(diff / Y_test)),
-        "MASE": np.mean(np.abs(diff / np.mean(np.abs(np.diff(Y_test))))),
-    }
-    if return_series:
-        series = {"Abs error": diff, "% error": diff / Y_test}
-        return local_metrics, series
-    return local_metrics
-
-
-def classification_metrics(
-    Y_test,
-    Y_pred,
-    Y_scores,
-    labels=None,
-    return_series=False,
-):
-    """
-    Compute several different clasification metrics (accuracy, F1 score, AUC, ...) from Y_test and predictions
-    """
-    Y_scores = Y_scores.to_list()
-    if labels is None:
-        n_class = Y_scores[0].shape[0]
-        labels = np.arange(-(n_class // 2), n_class // 2 + 1, 1.0)
-    # ovo and labels needed as Y_test does not always contain all classes
-    local_metrics = {
-        "Acc": metrics.accuracy_score(Y_test, Y_pred),
-        "Precision": metrics.precision_score(Y_test, Y_pred, average="weighted"),
-        "Recall": metrics.recall_score(Y_test, Y_pred, average="weighted"),
-        "F1": metrics.f1_score(Y_test, Y_pred, average="weighted"),
-        "ROCAUC": metrics.roc_auc_score(
-            Y_test, Y_scores, multi_class="ovo", average="weighted", labels=labels
-        ),
-        "LOGLOSS": metrics.log_loss(Y_test, Y_scores, labels=labels),
-    }
-    if return_series:
-        series = {"Abs error": diff, "% error": diff / Y_test}
-        return local_metrics, series
-    return local_metrics
 
 
 def plot_feature_importance(fitted_model, features, threshold=0.01, pca=None):
@@ -422,6 +373,7 @@ def plot_feature_importance(fitted_model, features, threshold=0.01, pca=None):
         threshold: minimum feature importance for the feature to be plotted
         pca: if a pca was applied, giev the pca object to find back the real feature importance
     """
+    # obj.feature_importances_ will raise AttributeError if the fitted_model does not have it
     importance = fitted_model.feature_importances_
     if pca:
         # importance is of size (n_components, 1)
