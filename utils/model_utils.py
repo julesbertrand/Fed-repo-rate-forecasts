@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import GridSearchCV, TimeSeriesSplit
 from sklearn import metrics
 from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 
 """
@@ -14,8 +15,49 @@ pca: perform pca and plot results
 vif_analysis: perform vif_analysis
 regression_metrics: compute regression metrics: r2, MAE, MAPE, RMSE,, MASE 
 classification_metrics: compute classification metrics: accuracy, precision, recall, f1-score, ROC AUc, log loss
+prepare_sequence_data: put data in sequences of shape (n_samples, lookback, n_features) for deep learning models
 train_test_split: enhanced train test split to account for the dates here, using the scikit-learn one 
 """
+
+
+def prepare_sequential_data(data, features, labels, lookback=12):
+    if isinstance(data, pd.DataFrame):
+        pass
+    X_temp = data[features].to_numpy()
+    Y = data[labels].iloc[:-lookback]
+    n, p = X_temp.shape
+    l = len(labels)
+    X = np.zeros(shape=(n - lookback, lookback, p))
+    for i in range(lookback):
+        X[:, i, :] = X_temp[i + 1 : n - lookback + i + 1]
+    return X, Y
+
+
+def train_test_split_dates(
+    X, Y, test_size=0.2, test_date=None, standardize=True, sequential=False
+):
+    if len(X) != len(Y):
+        raise IndexError("X, Y, and dates must have the same number of rows")
+    if not test_date:
+        test_date_idx = int(len(X) * (1 - test_size))
+        test_date = Y["Date"].iloc[test_date_idx]
+    test_mask = (Y["Date"] >= test_date).to_numpy()
+    X_train = X[~test_mask]
+    X_test = X[test_mask]
+    Y_train = Y[~test_mask]
+    Y_test = Y[test_mask]
+    if standardize:
+        scaler = StandardScaler()
+        if sequential:
+            # sequential data of size (n_samples, lookback, n_features)
+            scaler.fit(X_train[:, 0, :])
+            for i in range(X.shape[1]):
+                X_train[:, i, :] = scaler.transform(X_train[:, i, :])
+                X_test[:, i, :] = scaler.transform(X_test[:, i, :])
+        else:  # non-sequential data of size (n_samples, n_features)
+            X_train = scaler.fit_transform(X_train)
+            X_test = scaler.transform(X_test)
+    return X_train, Y_train, X_test, Y_test
 
 
 def cross_validate(
