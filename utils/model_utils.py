@@ -26,10 +26,9 @@ def prepare_sequential_data(data, features, labels, lookback=12):
     X_temp = data[features].to_numpy()
     Y = data[labels].iloc[:-lookback]
     n, p = X_temp.shape
-    l = len(labels)
     X = np.zeros(shape=(n - lookback, lookback, p))
     for i in range(lookback):
-        X[:, i, :] = X_temp[i + 1 : n - lookback + i + 1]
+        X[:, i, :] = X_temp[lookback - (i + 1) : n - (i + 1)]
     return X, Y
 
 
