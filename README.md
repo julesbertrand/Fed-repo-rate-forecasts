@@ -6,7 +6,7 @@
 
 ## Background and Goal of this Project
 
-This project was started as a follow-up to an academic project for Statistical Learning class. 
+This project was started as a follow-up to an academic project for a Statistical Learning class. 
 
 In a world where transactions take place at the speed of light, banks constantly need to balance their cash reserves. Banks lend or borrow reserve balances from other banking institutions every day, without any collateral other than that of the central bank, in order to be exactly at the mandatory reserve rate set by law. The effective federal funds rate is the weighted average of all interest rates negotiated between the borrowing and lending banks. The target is set by the Federal Reserve, which intervenes in the markets to ensure that the target is met. In Europe, for example, the ECB has been intervening constantly for several years via Quantitative easing.
 
@@ -61,9 +61,7 @@ Metrics: RMSE
 
 Prediction of change in fed interest rate, then add to current interest rate to get interest rate prediction
 
-Models: ensemble, regression
-
-Next: try neural net
+Models: ensemble, regression, LSTM
 
 ## Forecasts
 
