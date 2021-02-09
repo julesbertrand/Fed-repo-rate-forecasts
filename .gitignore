@@ -4,11 +4,14 @@
 *.vscode/
 *pycache*
 
+# virtual env
+venv/
+
 # Data
 data/
 
 # personal stuff
-code_snippets.txt
 resources/*.pdf
 resources/*.xlsx
-Old/
+perso/
+old/
