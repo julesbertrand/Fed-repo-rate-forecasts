@@ -1,7 +1,11 @@
-*.ipynb_checkpoints/
-Data/*
+
+# OS generated files
+*ipynb_checkpoints*
 *.vscode/
-__pycache__/
+*pycache*
+
+# Data
+data/
 
 # personal stuff
 code_snippets.txt
