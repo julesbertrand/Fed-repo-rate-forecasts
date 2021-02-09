@@ -442,7 +442,7 @@ class Dataset:
             for t in row_shifts:
                 data_shifted[col_name + "_t-{:d}".format(t)] = self.data[
                     col_name
-                ].shift(t)
+                ].shift(periods=t)
         if not inplace:
             return data_shifted
         self.data = pd.concat([self.data, data_shifted], axis=1)
