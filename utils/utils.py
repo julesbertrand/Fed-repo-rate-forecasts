@@ -22,21 +22,21 @@ def get_file_names(path="Data/", extension=".csv"):
     return file_names
 
 
-def open_file(path: str, sep: str = ";"):
+def open_file(filepath: str, sep: str = ";"):
     """
     Open the file given its complete path.
     pandas red_csv if csv, yaml if yaml, joblib otherwise
     """
-    _, extension = path.rsplit(".", 1)
-    if not os.path.exists(path):
-        raise FileNotFoundError(path)
+    _, extension = filepath.rsplit(".", 1)
+    if not os.path.exists(filepath):
+        raise FileNotFoundError(filepath)
     if extension == "csv":
-        f = pd.read_csv(path, sep=sep)
+        f = pd.read_csv(filepath, sep=sep)
     elif extension == "yaml":
-        with open(path, "r") as file_name:
-            f = yaml.safe_load(file_name)
+        with open(filepath, "r") as data:
+            f = yaml.safe_load(data)
     else:
-        f = joblib.load(path)
+        f = joblib.load(filepath)
     return f
 
 
@@ -56,25 +56,24 @@ def open_files(path: str, file_names: list) -> dict:
     return f_dict
 
 
-def save_file(path: str, file_name: str, data, replace: bool = False):
+def save_file(filepath: str, data, overwrite: bool = False):
     """
     Save file in directory given by path
     Input: path: directory where to save the file
             file_name: str, name to give to the new file
             data: object to save
-            replace: boolean, whether to overwrite already existing file with save name in same directory
+            overwrite: boolean, whether to overwrite already existing file with save name in same directory
     If the path does not exist or the file could not be saved, it will tell you
     """
-    if path[-1] != "/":
-        path += "/"
+    path, file_name = os.path.split(filepath)
     if not os.path.exists(path):
         raise FileNotFoundError("This path does not exist.")
     file_name, extension = file_name.split(".")
-    if replace:
+    if overwrite:
         try:
-            os.remove(file_name)
+            os.remove(filepath)
         except OSError:
-            pass  # if replace and the file does not exist, don't care
+            pass  # if overwrite and the file does not exist, don't care
     else:
         i = 0
         while True:
@@ -85,26 +84,27 @@ def save_file(path: str, file_name: str, data, replace: bool = False):
                 break
         file_name += "_{:d}".format(i) * (i > 0)
     file_name = ".".join((file_name, extension))
+    filepath = path + "/" + file_name
     if extension == "csv":
         data.to_csv(
-            path + file_name,
+            filepath,
             index=False,
             sep=";",
             encoding="utf-8",
         )
     elif extension == "yaml":
-        with open(path + file_name, "w") as file_name:
+        with open(filepath, "w") as file_name:
             yaml.dump(data, file_name)
     else:
-        joblib.dump(data, path + file_name, compress=1)
+        joblib.dump(data, filepath, compress=1)
 
 
-def save_files(path: str, files: dict, replace: bool = False):
+def save_files(path: str, files: dict, overwrite: bool = False):
     """
     Save a bunch of files
     Input: path: diretory in which the save will be saved
             files: dict file_name: file object
-            replace: whether to overwrite already existing file with save name in same directory
+            overwrite: whether to overwrite already existing file with save name in same directory
     If the path does not exist, then the directory will be created and the files saved in it
     """
     if path[-1] != "/":
@@ -114,7 +114,7 @@ def save_files(path: str, files: dict, replace: bool = False):
     files_not_saved = []
     for file_name, file in files.items():
         try:
-            save_file(path=path, data=file, file_name=file_name, replace=replace)
+            save_file(filepath=path + file_name, data=file, overwrite=overwrite)
         except Exception as e:
             files_not_saved.append(file_name + ": " + str(e))
     print(

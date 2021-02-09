@@ -30,6 +30,7 @@ def plot_models(
     estimator_params: list = [],
     type_of_change=None,
     clip_to_zero: bool = False,
+    is_regressor: bool = True,
     ncols: int = 1,
     height_per_ax: int = 6,
 ):
@@ -59,6 +60,7 @@ def plot_models(
         "estimator_params": estimator_params,
         "type_of_change": type_of_change,
         "clip_to_zero": clip_to_zero,
+        "is_regressor": is_regressor,
         "ncols": ncols,
     }
 
@@ -76,6 +78,7 @@ def plot_models(
         estimator_params,
         type_of_change,
         clip_to_zero,
+        is_regressor,
         ncols,
     ):
         plot_df_train, plot_df_test = compute_series_to_plot(
@@ -98,6 +101,7 @@ def plot_models(
             plotted_feature=plotted_feature,
             plot_metrics=True,
             estimator_params=estimator_params.pop(),
+            is_regressor=is_regressor,
             ncols=ncols,
         )
         return metrics
@@ -129,13 +133,16 @@ def compute_series_to_plot(
     type_of_change=None,
     clip_to_zero=False,
 ):
-    pred_train = estimator.predict(X_train)
-    pred_test = estimator.predict(X_test)
+    pred_train = estimator.predict(X_train).reshape(-1)
+    pred_test = estimator.predict(X_test).reshape(-1)
     plot_df_train = Y_train[[plotted_feature, date_col]]
     plot_df_test = Y_test[[plotted_feature, date_col]]
     if type_of_change is None:
         plot_df_train.loc[:, "pred_to_plot"] = pred_train
-        plot_df_test.loc[:, "pred_to_plot"] = pred_test
+        if clip_to_zero:
+            plot_df_test.loc[:, "pred_to_plot"] = pred_test.clip(min=0)
+        else:
+            plot_df_test.loc[:, "pred_to_plot"] = pred_test
         # if is_classifier(estimator):
         #     plot_df_test.loc[:, "Y_scores"] = list(estimator.predict_proba(X_test))
     else:  # compute reconstitued feature
@@ -199,6 +206,7 @@ def subplot_model_(
     plotted_feature,
     plot_metrics,
     estimator_params,
+    is_regressor,
     ncols,
     text_font_size=10,
 ):
@@ -309,43 +317,45 @@ def subplot_model_(
     )
     ax_bottom.axvline(x=x_line, color="r", alpha=0.5, linestyle="--", linewidth=0.7)
 
+    # title of subplot containing estimator type, non-default params and reg/classif metrics
     if estimator.__class__.__name__ == "Pipeline":
-        pipe = True
         estimator_names = [e.__class__.__name__ for e in estimator]
         estimator_name = " + ".join(estimator_names)
-        estimator = estimator[-1]
+    elif estimator.__class__.__name__ == "Model":
+        estimator_name = estimator.name
     else:
-        pipe = False
         estimator_name = estimator.__class__.__name__
 
+    title_str = "Model: " + estimator_name + "\n"
+    if estimator_params:
+        params_list = [k + ": {}".format(v) for k, v in estimator_params.items()]
+        params_str = "Params: "
+        length = len(params_str)
+        for p in params_list:
+            if length + len(p) > 150 and len(p) < 150:
+                params_str = params_str[:-3]
+                params_str += "\n"
+                length = 0
+            params_str += p + " | "
+            length += len(p) + 3
+        title_str += params_str
+    title_str += "\n"
+
     # compute metrics
-    if is_regressor(estimator):
+    if is_regressor:
         metrics_test = regression_metrics(
             plot_df_test[plotted_feature],
             plot_df_test["pred_to_plot"],
             return_series=False,
         )
-    elif is_classifier(estimator):
+    else:
         metrics_test = classification_metrics(
             plot_df_test[plotted_feature],
             plot_df_test["pred_to_plot"],
             plot_df_test["Y_scores"],
             return_series=False,
         )
-    else:
-        metrics_test = {}
 
-    # title of subplot containing estimator type, non-default params and reg/classif metrics
-    title_str = "Model: " + estimator_name + "\n"
-    if estimator_params:
-        if pipe:
-            params_str = "\n".join(
-                (k + ": {}".format(v) for k, v in estimator_params.items())
-            )
-        else:
-            params_str = str(estimator_params)
-        title_str += "Params: " + params_str
-    title_str += "\n"
     if plot_metrics:
         list_str = []
         if "reconst" in plot_df_test.columns:
@@ -361,6 +371,7 @@ def subplot_model_(
             metrics_str += ["  |  ".join(list_str[i * idx : (i + 1) * idx])]
         metrics_str = "\n".join(metrics_str)
         title_str += metrics_str
+    
     ax_main.set_title(title_str, fontsize=text_font_size + 2)
     return metrics_test
 
