@@ -9,13 +9,10 @@ from scipy.ndimage.interpolation import shift  # plot_model and compute_series_t
 from sklearn.metrics import r2_score
 from sklearn.base import is_classifier, is_regressor
 
-if not __name__ == "__main__":
-    from utils.utils import *
-    from utils.visualization import visualization_grid
-    from utils.model_utils import regression_metrics, classification_metrics
-else:
-    from visualization import visualization_grid
-    from model_utils import regression_metrics, classification_metrics
+
+from lib.utils import *
+from lib.visualization import visualization_grid
+from lib.model_utils import regression_metrics, classification_metrics
 
 
 def plot_models(
