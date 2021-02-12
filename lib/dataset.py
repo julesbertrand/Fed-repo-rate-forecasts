@@ -12,11 +12,11 @@ from statsmodels.tsa.stattools import adfuller
 # seasonal decomposition of a signal (trend, seasonal, residuals)
 from statsmodels.tsa.seasonal import seasonal_decompose
 
-if not __name__ == "__main__":
-    from utils.visualization import *
-    from utils.utils import open_file, save_files
+from lib.utils import open_file
+from lib.visualization import visualize_features, visualize_stationarity, visualize_seasonality
 
 
+# comment above functions
 class Dataset:
     """
     Class to preprocess and wrangle the data, select features, and save dataset with Train/test sets
@@ -54,6 +54,7 @@ class Dataset:
             "date_col": date_col,
             "excl_cols": excl_cols,
         }
+        # another boring comment
         self.preprocess(
             path=path,
             sep=sep,

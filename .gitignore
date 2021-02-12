@@ -1,4 +1,3 @@
-
 # OS generated files
 *ipynb_checkpoints*
 *.vscode/
@@ -10,7 +9,11 @@ venv/
 # Data
 data/
 
+# credentials
+secrets/
+
 # personal stuff
+*.ipynb
 resources/*.pdf
 resources/*.xlsx
 perso/
