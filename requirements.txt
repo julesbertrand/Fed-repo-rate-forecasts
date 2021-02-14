@@ -2,6 +2,9 @@
 tqdm==4.56.0
 matplotlib==3.3.4
 pytest==6.2.2
+pytest-cov
+pylint
+loguru==0.5.3
 seaborn==0.11.0
 statsmodels==0.11.1
 joblib==1.0.0
