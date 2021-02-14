@@ -14,4 +14,5 @@ before_script:
   - export PYTHONPATH=$PYTHONPATH:$(pwd)
 
 script:
+  # - pylint -E config lib tests
   - pytest -v --cov-report term-missing --cov=lib tests

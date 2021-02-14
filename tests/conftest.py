@@ -1,6 +1,6 @@
+import datetime as dt
 import pytest
 import requests
-import datetime as dt
 from config.config import API_URLS
 
 
@@ -15,6 +15,8 @@ def mock_response_get(monkeypatch):
 
 
 class MockAPIResponse:
+    """Produces a api mock response object for get requests"""
+
     def __init__(self, url, params, **kwargs):
         self.url = url
         self.params = params
@@ -26,18 +28,20 @@ class MockAPIResponse:
         pass
 
     def json(self):
+        """Return json formated response"""
         if self.url == API_URLS["FRED_API_URL_SER"]:
             return self.fred_api_response_ser(self.params)
-        elif self.url == API_URLS["FRED_API_URL_OBS"]:
+        if self.url == API_URLS["FRED_API_URL_OBS"]:
             return self.fred_api_response_obs(self.params)
-        elif self.url == API_URLS["USBLS_API_URL"]:
+        if self.url == API_URLS["USBLS_API_URL"]:
             return {"mock_key": "mock response from usbls"}
-        else:
-            raise RuntimeError(
-                f"Network access not allowed during testing! No mock response for this url: {self.url}"
-            )
+        raise RuntimeError(
+            "Network access not allowed during testing! "
+            f"No mock response for this url: {self.url}"
+        )
 
     def fred_api_response_obs(self, params):
+        """ fred api response format for obesrvations"""
         obs_val_dict = {
             "realtime_start": self.today_date,
             "realtime_end": self.today_date,
@@ -62,6 +66,7 @@ class MockAPIResponse:
         return resp
 
     def fred_api_response_ser(self, params):
+        """fred api response format for obesrvations"""
         resp = {
             "realtime_start": self.today_date,
             "realtime_end": self.today_date,
@@ -78,3 +83,74 @@ class MockAPIResponse:
             ],
         }
         return resp
+
+
+@pytest.fixture
+def expected_result_get_fred_data():
+    result = (
+        [
+            {
+                "realtime_start": "2021-02-14",
+                "realtime_end": "2021-02-14",
+                "observation_start": "1980-01-08",
+                "observation_end": None,
+                "units": "lin",
+                "output_type": 1,
+                "file_type": "json",
+                "order_by": "observation_date",
+                "sort_order": "asc",
+                "count": 3,
+                "offset": 0,
+                "limit": 100000,
+                "observations": [
+                    {
+                        "realtime_start": "2021-02-14",
+                        "realtime_end": "2021-02-14",
+                        "date": "1980-01-01",
+                        "value": "13.82",
+                    },
+                ],
+            },
+            {
+                "realtime_start": "2021-02-14",
+                "realtime_end": "2021-02-14",
+                "observation_start": "1980-01-08",
+                "observation_end": None,
+                "units": "lin",
+                "output_type": 1,
+                "file_type": "json",
+                "order_by": "observation_date",
+                "sort_order": "asc",
+                "count": 3,
+                "offset": 0,
+                "limit": 100000,
+                "observations": [
+                    {
+                        "realtime_start": "2021-02-14",
+                        "realtime_end": "2021-02-14",
+                        "date": "1980-01-01",
+                        "value": "13.82",
+                    },
+                ],
+            },
+        ],
+        [
+            {
+                "name": "Mock series name",
+                "series_id": "FEDFUNDS",
+                "frequency": "m",
+                "units": "lin",
+                "aggregation_method": None,
+                "seasonal_adjustment": None,
+            },
+            {
+                "name": "Mock series name",
+                "series_id": "DFF",
+                "frequency": "m",
+                "units": "lin",
+                "aggregation_method": "eop",
+                "seasonal_adjustment": None,
+            },
+        ],
+    )
+    return result
