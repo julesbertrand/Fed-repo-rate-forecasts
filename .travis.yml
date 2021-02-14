@@ -7,12 +7,11 @@ python:
 install:
   - pip install -r requirements.txt
   - pip install pylint
+  - pip install pytest-cov
 
 # Run linting and tests
 before_script:
   - export PYTHONPATH=$PYTHONPATH:$(pwd)
 
 script:
-  - pylint lib
-  - pylint tests
   - pytest -v --cov-report term-missing --cov=lib tests
