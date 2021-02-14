@@ -18,4 +18,4 @@ script:
   - pytest -v --cov-report term-missing --cov=lib tests
 
 after_success:
-  - bash <(curl -s https://codecov.io/bash)
+  - codecov
