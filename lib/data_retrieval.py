@@ -1,4 +1,8 @@
 from functools import reduce
+from collections import defaultdict
+import re
+import json
+from loguru import logger
 import requests
 import pandas as pd
 from config.config import API_ENDPOINTS
@@ -135,3 +139,96 @@ def clean_fred_serie(obs_data, info_data: dict) -> pd.DataFrame:
     series_name = "_".join(name_components)
     data.rename(columns={"value": series_name}, inplace=True)
     return data
+
+
+def get_usbls_data(api_key: str, series_ids: list, start_date: str = None, end_date: str = None):
+    """Get multiple series data and info from fred api
+    and group in two lists (one info, one data)
+
+    Parameters
+    ----------
+    api_key: str
+        Your api key to access fred api
+        see
+    series_ids: list
+        List of ids US BLS series
+    start_date: str
+        The start of the observation period. YYYY-MM-DD or YYYY
+        USBLS only sends data for the whole year
+    end_date: str
+        The start of the observation period. YYYY-MM-DD or YYYY
+        USBLS only sends data for the whole year
+
+    Returns
+    -------
+    info_list: list
+        List of dictionaries with metadata for every series retrieved
+    data_list: list
+        List of dictionaries with data reponse from fred api in json format
+    """
+    headers = {'Content-type': 'application/json'}
+    payload = {
+        "registrationkey": api_key,
+        "catalog": True,
+        "seriesid": series_ids
+    }
+
+    # years limited at 20 per query on usbls API v2
+    # build 20 yeard periods, query for each one
+    start_year, end_year = int(start_date[:4]), int(end_date[:4])
+    periods = []
+    while end_year - start_year >= 20:
+        periods.append((str(start_year), str(start_year + 19)))
+        start_year += 20
+    periods.append((str(start_year), str(end_year)))
+
+    obs_dict = defaultdict(list)
+    for start_year, end_year in periods:
+        payload.update({"startyear": start_year, "endyear": end_year})
+        response = usbls_api_query(
+            url=API_ENDPOINTS["USBLS_API_URL"],
+            payload=payload,
+            headers=headers
+        )
+        data = response["Results"]["series"]
+        for i in range(len(series_ids)):
+            obs_dict[data[i]["seriesID"]] += data[i]["data"]
+    obs_list = [obs_dict[k] for k in series_ids]
+    
+    info_list = []
+    for i, series_id in enumerate(series_ids):
+        info_dict = {
+            "name": data[i]["catalog"]["survey_name"],
+            "series_id": series_id,
+            "frequency": None,
+            "units": None,
+            "aggregation_method": None,
+            "seasonal_adjustment": re.sub(
+                r'[^NSA]', r'', data[i]["catalog"]["seasonality"]
+            ).lower(),
+        }
+        info_list.append(info_dict)
+        
+    return obs_list, info_list
+        
+
+def usbls_api_query(url: str, payload: dict, headers: dict =None):
+    """Send a post request to US BLS API
+
+    Raises
+    ------
+    HTPPError
+
+    Returns
+    -------
+    requests.Response.json()
+    """
+    payload = json.dumps(payload)
+    response = requests.post(url=url, data=payload, headers=headers)
+    response.raise_for_status()
+    response = response.json()
+    if response["status"] == "REQUEST_FAILED":
+        raise requests.HTTPError("Message from US BLS API:\n" + "\n".join(response["message"]))
+    if len(response["message"]) > 0:
+        logger.warning("\n" + "\n".join(response["message"]))
+    return response
