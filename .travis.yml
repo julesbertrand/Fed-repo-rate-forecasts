@@ -8,7 +8,8 @@ install:
   - pip install --user -r requirements.txt
   - python setup.py install
 
-# Run the tests
+# Run linting and tests
 script:
-  - pylint
-  - pytest
+  - pylint lib
+  - pylint tests
+  - pytest -v --cov-report term-missing --cov=lib tests/
