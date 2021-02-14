@@ -1,7 +1,7 @@
 import datetime as dt
 import pytest
 import requests
-from config.config import API_URLS
+from config.config import API_ENDPOINTS
 
 
 @pytest.fixture(autouse=True)
@@ -17,9 +17,8 @@ def mock_response_get(monkeypatch):
 class MockAPIResponse:
     """Produces a api mock response object for get requests"""
 
-    def __init__(self, url, params, **kwargs):
+    def __init__(self, url, **kwargs):
         self.url = url
-        self.params = params
         self.kwargs = kwargs
         self.today_date = dt.date.today().strftime("%Y-%m-%d")
 
@@ -29,12 +28,12 @@ class MockAPIResponse:
 
     def json(self):
         """Return json formated response"""
-        if self.url == API_URLS["FRED_API_URL_SER"]:
-            return self.fred_api_response_ser(self.params)
-        if self.url == API_URLS["FRED_API_URL_OBS"]:
-            return self.fred_api_response_obs(self.params)
-        if self.url == API_URLS["USBLS_API_URL"]:
-            return {"mock_key": "mock response from usbls"}
+        if self.url == API_ENDPOINTS["FRED_API_URL_SER"]:
+            return self.fred_api_response_ser(self.kwargs["params"])
+        if self.url == API_ENDPOINTS["FRED_API_URL_OBS"]:
+            return self.fred_api_response_obs(self.kwargs["params"])
+        if self.url == API_ENDPOINTS["USBLS_API_URL"]:
+            return self.usbls_api_response(self.kwargs["data"])
         raise RuntimeError(
             "Network access not allowed during testing! "
             f"No mock response for this url: {self.url}"
@@ -84,14 +83,17 @@ class MockAPIResponse:
         }
         return resp
 
+    def usbls_api_response(self, seriesids):
+        raise NotImplementedError
+
 
 @pytest.fixture
 def expected_result_get_fred_data():
     result = (
         [
             {
-                "realtime_start": "2021-02-14",
-                "realtime_end": "2021-02-14",
+                "realtime_start": dt.date.today().strftime("%Y-%m-%d"),
+                "realtime_end": dt.date.today().strftime("%Y-%m-%d"),
                 "observation_start": "1980-01-08",
                 "observation_end": None,
                 "units": "lin",
@@ -104,16 +106,16 @@ def expected_result_get_fred_data():
                 "limit": 100000,
                 "observations": [
                     {
-                        "realtime_start": "2021-02-14",
-                        "realtime_end": "2021-02-14",
+                        "realtime_start": dt.date.today().strftime("%Y-%m-%d"),
+                        "realtime_end": dt.date.today().strftime("%Y-%m-%d"),
                         "date": "1980-01-01",
                         "value": "13.82",
                     },
                 ],
             },
             {
-                "realtime_start": "2021-02-14",
-                "realtime_end": "2021-02-14",
+                "realtime_start": dt.date.today().strftime("%Y-%m-%d"),
+                "realtime_end": dt.date.today().strftime("%Y-%m-%d"),
                 "observation_start": "1980-01-08",
                 "observation_end": None,
                 "units": "lin",
@@ -126,8 +128,8 @@ def expected_result_get_fred_data():
                 "limit": 100000,
                 "observations": [
                     {
-                        "realtime_start": "2021-02-14",
-                        "realtime_end": "2021-02-14",
+                        "realtime_start": dt.date.today().strftime("%Y-%m-%d"),
+                        "realtime_end": dt.date.today().strftime("%Y-%m-%d"),
                         "date": "1980-01-01",
                         "value": "13.82",
                     },

@@ -1,7 +1,7 @@
 from functools import reduce
 import requests
 import pandas as pd
-from config.config import API_URLS
+from config.config import API_ENDPOINTS
 
 
 def get_fred_data(api_key: str, series_params: list, start_date: str = None, end_date: str = None):
@@ -12,7 +12,7 @@ def get_fred_data(api_key: str, series_params: list, start_date: str = None, end
     ----------
     api_key: str
         Your api key to access fred api
-        see
+        see https://fred.stlouisfed.org/docs/api/api_key.html
     series_params: list
         List of dicts with series_params, including at least 'series_id'
     start_date: str
@@ -27,7 +27,7 @@ def get_fred_data(api_key: str, series_params: list, start_date: str = None, end
     -------
     info_list: list
         List of dictionaries with metadata for every series retrieved
-    data_list: list
+    obs_list: list
         List of dictionaries with data reponse from fred api in json format
     """
     format_params = {
@@ -41,12 +41,12 @@ def get_fred_data(api_key: str, series_params: list, start_date: str = None, end
     for params in series_params:
         params.update(format_params)
 
-        info_resp = requests.get(API_URLS["FRED_API_URL_SER"], params=params)
+        info_resp = requests.get(API_ENDPOINTS["FRED_API_URL_SER"], params=params)
         info_resp.raise_for_status()
         info_series = info_resp.json()["seriess"][0]
 
         obs_resp = requests.get(
-            API_URLS["FRED_API_URL_OBS"],
+            API_ENDPOINTS["FRED_API_URL_OBS"],
             params=params,
         )
         obs_resp.raise_for_status()
