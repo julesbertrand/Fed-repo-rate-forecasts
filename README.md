@@ -2,7 +2,8 @@
 
 ![GitHub](https://img.shields.io/github/license/julesbertrand/Fed-repo-rate-forecasts)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://pypi.org/project/black/) 
-<!-- [![Travis (.com)](https://img.shields.io/travis/com/julesbertrand/litreading-insight-project?label=TravisCI)](https://travis-ci.com/github/julesbertrand/litreading-insight-project) -->
+[![Build Status](https://travis-ci.com/julesbertrand/Fed-repo-rate-forecasts.svg?branch=feature%2Fdata-retrieval)](https://travis-ci.com/julesbertrand/Fed-repo-rate-forecasts)
+[![codecov](https://codecov.io/gh/julesbertrand/Fed-repo-rate-forecasts/branch/master/graph/badge.svg?token=ULW5SHSJSC)](https://codecov.io/gh/julesbertrand/Fed-repo-rate-forecasts)
 
 ## Background and Goal of this Project
 

@@ -11,8 +11,11 @@ install:
 
 # Run linting and tests
 before_script:
-  - export PYTHONPATH=$PYTHONPATH:$(pwd)
+  - export PYTHONPATH="$(pwd):$PYTHONPATH"
 
 script:
   # - pylint -E config lib tests
   - pytest -v --cov-report term-missing --cov=lib tests
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
