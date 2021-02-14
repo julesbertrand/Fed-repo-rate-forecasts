@@ -1,0 +1,71 @@
+data_start_date: 1954-07-07
+
+fred:
+  FRED_API_URL_OBS: "https://api.stlouisfed.org/fred/series/observations?"
+  FRED_API_URL_SER: "https://api.stlouisfed.org/fred/series?"
+  series_params:
+    - frequency: m
+      series_id: FEDFUNDS
+      units: lin
+    - aggregation_method: eop
+      frequency: m
+      series_id: DFF
+      units: lin
+    - aggregation_method: avg
+      frequency: m
+      series_id: DFF
+      units: lin
+    - frequency: q
+      series_id: GFDEBTN
+      units: lin
+    - frequency: q
+      series_id: GFDEBTN
+      units: pch
+    - frequency: q
+      series_id: GFDEGDQ188S
+      units: lin
+    - frequency: q
+      series_id: GFDEGDQ188S
+      units: pch
+    - frequency: m
+      series_id: PCE
+      units: lin
+    - frequency: m
+      series_id: PCE
+      units: pch
+    - frequency: m
+      series_id: PCEC96
+      units: lin
+    - frequency: m
+      series_id: PCEC96
+      units: pch
+    - frequency: q
+      series_id: A794RX0Q048SBEA
+      units: lin
+    - frequency: q
+      series_id: A794RX0Q048SBEA
+      units: pch
+    - frequency: q
+      series_id: W790RC1Q027SBEA
+      units: lin
+    - frequency: q
+      series_id: W790RC1Q027SBEA
+      units: pch
+    - frequency: q
+      series_id: NNBGFNQ027S
+      units: lin
+    - frequency: q
+      series_id: NNBGFNQ027S
+      units: pch
+    - frequency: q
+      series_id: NNBGFNQ027S
+      units: lin
+    - frequency: q
+      series_id: NNBGFNQ027S
+      units: pch
+    - frequency: q
+      series_id: TCMDO
+      units: lin
+    - frequency: q
+      series_id: TCMDO
+      units: pch
