@@ -9,7 +9,10 @@ install:
   - pip install pylint
 
 # Run linting and tests
+before_script:
+  - export PYTHONPATH=$PYTHONPATH:$(pwd)
+
 script:
   - pylint lib
   - pylint tests
-  - pytest -v --cov-report term-missing --cov=lib tests/
+  - pytest -v --cov-report term-missing --cov=lib tests
