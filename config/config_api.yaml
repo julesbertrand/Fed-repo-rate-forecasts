@@ -69,3 +69,24 @@ fred:
     - frequency: q
       series_id: TCMDO
       units: pch
+    - frequency: m 
+      series_id: WTISPLC
+      units: lin 
+    - frequency: m 
+      series_id: DPCERAM1M225NBEA
+      units: lin 
+    - frequency: m 
+      series_id: USREC
+      units: lin 
+    
+    
+
+usbls:
+  USBLS_API_URL: 'https://api.bls.gov/publicAPI/v2/timeseries/data/'
+  series_params:
+    - CUSR0000SA0
+    - CUSR0000SA0E
+    - CUSR0000SA0LE
+    - LNS12300000
+    - LNS13000000
+    - LNS14000000
