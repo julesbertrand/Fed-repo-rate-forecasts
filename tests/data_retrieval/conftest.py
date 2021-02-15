@@ -105,9 +105,7 @@ class MockAPIResponse:
                 "Results": {},
             }
             return response
-        response = load_test_data(
-            "tests/data_retrieval/expected_usbls_mock_api_response.json"
-        )
+        response = load_test_data("tests/data_retrieval/expected_usbls_mock_api_response.json")
         return response
 
 
@@ -120,15 +118,11 @@ def load_test_data(filepath):
 
 @pytest.fixture
 def expected_result_get_fred_data():
-    data = tuple(
-        load_test_data("tests/data_retrieval/expected_result_get_fred_data.json")
-    )
+    data = tuple(load_test_data("tests/data_retrieval/expected_result_get_fred_data.json"))
     return data
 
 
 @pytest.fixture
 def expected_result_get_usbls_data():
-    data = tuple(
-        load_test_data("tests/data_retrieval/expected_result_get_usbls_data.json")
-    )
+    data = tuple(load_test_data("tests/data_retrieval/expected_result_get_usbls_data.json"))
     return data
