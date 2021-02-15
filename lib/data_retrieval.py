@@ -1,5 +1,6 @@
 from functools import reduce
 from collections import defaultdict
+import datetime
 import re
 import json
 from loguru import logger
@@ -141,7 +142,9 @@ def clean_fred_serie(obs_data, info_data: dict) -> pd.DataFrame:
     return data
 
 
-def get_usbls_data(api_key: str, series_ids: list, start_date: str = None, end_date: str = None):
+def get_usbls_data(
+    api_key: str, series_ids: list, start_date: datetime.date, end_date: datetime.date = None
+):
     """Get multiple series data and info from fred api
     and group in two lists (one info, one data)
 
@@ -152,12 +155,10 @@ def get_usbls_data(api_key: str, series_ids: list, start_date: str = None, end_d
         see
     series_ids: list
         List of ids US BLS series
-    start_date: str
-        The start of the observation period. YYYY-MM-DD or YYYY
-        USBLS only sends data for the whole year
-    end_date: str
-        The start of the observation period. YYYY-MM-DD or YYYY
-        USBLS only sends data for the whole year
+    start_date: datetime.date
+        The start of the observation period. USBLS only sends data for whole years
+    end_date: datetime.data
+        The start of the observation period. USBLS only sends data for whole years
 
     Returns
     -------
@@ -166,16 +167,15 @@ def get_usbls_data(api_key: str, series_ids: list, start_date: str = None, end_d
     data_list: list
         List of dictionaries with data reponse from fred api in json format
     """
-    headers = {'Content-type': 'application/json'}
-    payload = {
-        "registrationkey": api_key,
-        "catalog": True,
-        "seriesid": series_ids
-    }
+    headers = {"Content-type": "application/json"}
+    payload = {"registrationkey": api_key, "catalog": True, "seriesid": series_ids}
 
     # years limited at 20 per query on usbls API v2
     # build 20 yeard periods, query for each one
-    start_year, end_year = int(start_date[:4]), int(end_date[:4])
+    if end_date is None:
+        end_date = datetime.date.today()
+    start_year = int(start_date.strftime("%Y"))
+    end_year = int(end_date.strftime("%Y"))
     periods = []
     while end_year - start_year >= 20:
         periods.append((str(start_year), str(start_year + 19)))
@@ -186,15 +186,13 @@ def get_usbls_data(api_key: str, series_ids: list, start_date: str = None, end_d
     for start_year, end_year in periods:
         payload.update({"startyear": start_year, "endyear": end_year})
         response = usbls_api_query(
-            url=API_ENDPOINTS["USBLS_API_URL"],
-            payload=payload,
-            headers=headers
+            url=API_ENDPOINTS["USBLS_API_URL"], payload=payload, headers=headers
         )
         data = response["Results"]["series"]
         for i in range(len(series_ids)):
             obs_dict[data[i]["seriesID"]] += data[i]["data"]
     obs_list = [obs_dict[k] for k in series_ids]
-    
+
     info_list = []
     for i, series_id in enumerate(series_ids):
         info_dict = {
@@ -204,15 +202,15 @@ def get_usbls_data(api_key: str, series_ids: list, start_date: str = None, end_d
             "units": None,
             "aggregation_method": None,
             "seasonal_adjustment": re.sub(
-                r'[^NSA]', r'', data[i]["catalog"]["seasonality"]
+                r"[^NSA]", r"", data[i]["catalog"]["seasonality"]
             ).lower(),
         }
         info_list.append(info_dict)
-        
-    return obs_list, info_list
-        
 
-def usbls_api_query(url: str, payload: dict, headers: dict =None):
+    return obs_list, info_list
+
+
+def usbls_api_query(url: str, payload: dict, headers: dict) -> dict:
     """Send a post request to US BLS API
 
     Raises
@@ -221,7 +219,7 @@ def usbls_api_query(url: str, payload: dict, headers: dict =None):
 
     Returns
     -------
-    requests.Response.json()
+    dict
     """
     payload = json.dumps(payload)
     response = requests.post(url=url, data=payload, headers=headers)
@@ -232,3 +230,77 @@ def usbls_api_query(url: str, payload: dict, headers: dict =None):
     if len(response["message"]) > 0:
         logger.warning("\n" + "\n".join(response["message"]))
     return response
+
+
+def clean_usbls_data(obs_data_list: list, info_data_list: list):
+    """Clean output from get_fred_data to get an aggregated dataframe
+
+    Parameters
+    ----------
+    obs_data_list: list
+        List of all fred responses bodies in json format
+    info_data_list
+        List of dicts containing metadata about every retrieved series
+
+    Returns
+    -------
+    pd.DataFrame
+        Aggregated data with names, in the right format
+    """
+    cleaned_data_list = []
+    for i, obs_data in enumerate(obs_data_list):
+        cleaned_data = clean_usbls_series(obs_data=obs_data, info_data=info_data_list[i])
+        cleaned_data_list.append(cleaned_data)
+
+    merged_data = reduce(
+        lambda left, right: pd.merge(left, right, on="date", how="outer"),
+        cleaned_data_list,
+    )
+
+    merged_data["date"] = pd.to_datetime(merged_data["date"], format="%Y-%m-%d")
+    data_types = {c: float for c in merged_data.columns.difference(["date"])}
+    merged_data = merged_data.astype(data_types)
+    return merged_data
+
+
+def clean_usbls_series(obs_data: list, info_data: dict) -> pd.DataFrame:
+    """Clean a series json response from fred api
+
+    Parameters
+    ----------
+    obs_data: json or dict
+        body of the respone of the api
+    info_data: dict
+        Information on teh series, including at least 'series_id'
+
+    Raises
+    ------
+    KeyError
+        If 'series_id' not in info_data keys
+
+    Returns
+    -------
+    pd.DataFrame
+        df with columns 'date' and a new name based on info_data for cleaned series
+    """
+    if info_data.get("series_id") is None:
+        raise KeyError("No 'series_id' in info_data: this key is mandatory.")
+
+    data = pd.DataFrame(obs_data)
+    data["date"] = pd.to_datetime(
+        data["year"] + "-" + data["periodName"] + "-01", format="%Y-%B-%d"
+    )
+    data.drop(columns=data.columns.difference(["value", "date"]), inplace=True)
+    name_components = []
+    for field in [
+        "series_id",
+        "frequency",
+        "units",
+        "aggregation_method",
+        "seasonal_adjustment",
+    ]:
+        if info_data.get(field):
+            name_components.append(info_data[field])
+    series_name = "_".join(name_components)
+    data.rename(columns={"value": series_name}, inplace=True)
+    return data
