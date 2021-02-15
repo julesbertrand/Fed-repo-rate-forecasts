@@ -1,11 +1,9 @@
-from functools import reduce
 from collections import defaultdict
 import datetime
 import re
 import json
 from loguru import logger
 import requests
-import pandas as pd
 from config.config import API_ENDPOINTS
 
 
@@ -69,77 +67,6 @@ def get_fred_data(api_key: str, series_params: list, start_date: str = None, end
         info_list.append(info_dict)
         obs_list.append(obs_content)
     return obs_list, info_list
-
-
-def clean_fred_data(obs_data_list: list, info_data_list: list) -> pd.DataFrame:
-    """Clean output from get_fred_data to get an aggregated dataframe
-
-    Parameters
-    ----------
-    obs_data_list: list
-        List of all fred responses bodies in json format
-    info_data_list
-        List of dicts containing metadata about every retrieved serie
-
-    Returns
-    -------
-    pd.DataFrame
-        Aggregated data with names, in the right format
-    """
-    cleaned_data_list = []
-    for i, obs_data in enumerate(obs_data_list):
-        cleaned_data = clean_fred_serie(obs_data=obs_data, info_data=info_data_list[i])
-        cleaned_data_list.append(cleaned_data)
-
-    merged_data = reduce(
-        lambda left, right: pd.merge(left, right, on="date", how="outer"),
-        cleaned_data_list,
-    )
-
-    merged_data["date"] = pd.to_datetime(merged_data["date"], format="%Y-%m-%d")
-    data_types = {c: float for c in merged_data.columns.difference(["date"])}
-    merged_data = merged_data.astype(data_types)
-    return merged_data
-
-
-def clean_fred_serie(obs_data, info_data: dict) -> pd.DataFrame:
-    """Clean a series json response from fred api
-
-    Parameters
-    ----------
-    obs_data: json or dict
-        body of the respone of the api
-    info_data: dict
-        Information on teh serie, including at least 'series_id'
-
-    Raises
-    ------
-    KeyError
-        If 'series_id' not in info_data keys
-
-    Returns
-    -------
-    pd.DataFrame
-        df with columns 'date' and a new name based on info_data for cleaned serie
-    """
-    if info_data.get("series_id") is None:
-        raise KeyError("No 'series_id' in info_data: this key is mandatory.")
-
-    data = pd.json_normalize(obs_data["observations"])
-    data.drop(columns=["realtime_start", "realtime_end"], inplace=True)
-    name_components = []
-    for field in [
-        "series_id",
-        "frequency",
-        "units",
-        "aggregation_method",
-        "seasonal_adjustment",
-    ]:
-        if info_data.get(field):
-            name_components.append(info_data[field])
-    series_name = "_".join(name_components)
-    data.rename(columns={"value": series_name}, inplace=True)
-    return data
 
 
 def get_usbls_data(
@@ -230,77 +157,3 @@ def usbls_api_query(url: str, payload: dict, headers: dict) -> dict:
     if len(response["message"]) > 0:
         logger.warning("\n" + "\n".join(response["message"]))
     return response
-
-
-def clean_usbls_data(obs_data_list: list, info_data_list: list):
-    """Clean output from get_fred_data to get an aggregated dataframe
-
-    Parameters
-    ----------
-    obs_data_list: list
-        List of all fred responses bodies in json format
-    info_data_list
-        List of dicts containing metadata about every retrieved series
-
-    Returns
-    -------
-    pd.DataFrame
-        Aggregated data with names, in the right format
-    """
-    cleaned_data_list = []
-    for i, obs_data in enumerate(obs_data_list):
-        cleaned_data = clean_usbls_series(obs_data=obs_data, info_data=info_data_list[i])
-        cleaned_data_list.append(cleaned_data)
-
-    merged_data = reduce(
-        lambda left, right: pd.merge(left, right, on="date", how="outer"),
-        cleaned_data_list,
-    )
-
-    merged_data["date"] = pd.to_datetime(merged_data["date"], format="%Y-%m-%d")
-    data_types = {c: float for c in merged_data.columns.difference(["date"])}
-    merged_data = merged_data.astype(data_types)
-    return merged_data
-
-
-def clean_usbls_series(obs_data: list, info_data: dict) -> pd.DataFrame:
-    """Clean a series json response from fred api
-
-    Parameters
-    ----------
-    obs_data: json or dict
-        body of the respone of the api
-    info_data: dict
-        Information on teh series, including at least 'series_id'
-
-    Raises
-    ------
-    KeyError
-        If 'series_id' not in info_data keys
-
-    Returns
-    -------
-    pd.DataFrame
-        df with columns 'date' and a new name based on info_data for cleaned series
-    """
-    if info_data.get("series_id") is None:
-        raise KeyError("No 'series_id' in info_data: this key is mandatory.")
-
-    data = pd.DataFrame(obs_data)
-    data["date"] = pd.to_datetime(
-        data["year"] + "-" + data["periodName"] + "-01", format="%Y-%B-%d"
-    )
-    data.drop(columns=data.columns.difference(["value", "date"]), inplace=True)
-    name_components = []
-    for field in [
-        "series_id",
-        "frequency",
-        "units",
-        "aggregation_method",
-        "seasonal_adjustment",
-    ]:
-        if info_data.get(field):
-            name_components.append(info_data[field])
-    series_name = "_".join(name_components)
-    data.rename(columns={"value": series_name}, inplace=True)
-    return data
