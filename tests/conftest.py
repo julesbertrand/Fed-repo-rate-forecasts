@@ -14,6 +14,16 @@ def mock_response_get(monkeypatch):
     monkeypatch.setattr(requests, "get", mock_get)
 
 
+@pytest.fixture(autouse=True)
+def mock_response_post(monkeypatch):
+    """requests.get mocked to return something based on MockAPIResponse class"""
+
+    def mock_post(*args, **kwargs):
+        return MockAPIResponse(*args, **kwargs)
+
+    monkeypatch.setattr(requests, "post", mock_post)
+
+
 class MockAPIResponse:
     """Produces a api mock response object for get requests"""
 
@@ -84,8 +94,19 @@ class MockAPIResponse:
         }
         return response
 
-    def usbls_api_response(self, seriesids):
-        raise NotImplementedError
+    def usbls_api_response(self):
+        """us bls api mock response for post request"""
+        data = json.loads(self.kwargs.get("data"))
+        if data.get("seriesid") is None:
+            response = {
+                "status": "REQUEST_FAILED",
+                "responseTime": 211,
+                "message": ["Mock Error maessaeg from usbls"],
+                "Results": {},
+            }
+            return response
+        response = load_test_data("tests/data_retrieval/expected_usbls_mock_api_response.json")
+        return response
 
 
 def load_test_data(filepath):
@@ -99,4 +120,10 @@ def load_test_data(filepath):
 @pytest.fixture
 def expected_result_get_fred_data():
     data = tuple(load_test_data("tests/data_retrieval/expected_result_get_fred_data.json"))
+    return data
+
+
+@pytest.fixture
+def expected_result_get_usbls_data():
+    data = tuple(load_test_data("tests/data_retrieval/expected_result_get_usbls_data.json"))
     return data
