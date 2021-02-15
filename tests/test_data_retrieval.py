@@ -1,4 +1,6 @@
+import datetime
 import pytest
+import requests
 import pandas as pd
 from lib import data_retrieval
 
@@ -37,11 +39,21 @@ def test_clean_fred_data_exception_raised(expected_result_get_fred_data):
 
 @pytest.mark.get_data
 def test_get_usbls_data(expected_result_get_usbls_data):
-    start_date = "1995"
-    end_date = "1995"
+    start_date = datetime.date(year=1995, month=1, day=1)
+    end_date = datetime.date(year=1995, month=1, day=1)
     series_ids = ["CUUR0000SA0", "SUUR0000SA0"]
 
     test_result = data_retrieval.get_usbls_data(
         api_key="mock_key", series_ids=series_ids, start_date=start_date, end_date=end_date
     )
     assert test_result == expected_result_get_usbls_data
+
+
+@pytest.mark.get_data
+def test_get_usbls_data_exception_raised():
+    with pytest.raises(requests.HTTPError):
+        data_retrieval.get_usbls_data(
+            api_key="mock_key",
+            series_ids=None,
+            start_date=datetime.date(year=2018, month=1, day=1),
+        )
