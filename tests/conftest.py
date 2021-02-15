@@ -1,4 +1,4 @@
-import datetime as dt
+import json
 import pytest
 import requests
 from config.config import API_ENDPOINTS
@@ -20,7 +20,6 @@ class MockAPIResponse:
     def __init__(self, url, **kwargs):
         self.url = url
         self.kwargs = kwargs
-        self.today_date = dt.date.today().strftime("%Y-%m-%d")
 
     @staticmethod
     def raise_for_status():
@@ -29,27 +28,28 @@ class MockAPIResponse:
     def json(self):
         """Return json formated response"""
         if self.url == API_ENDPOINTS["FRED_API_URL_SER"]:
-            return self.fred_api_response_ser(self.kwargs["params"])
+            return self.fred_api_response_ser()
         if self.url == API_ENDPOINTS["FRED_API_URL_OBS"]:
-            return self.fred_api_response_obs(self.kwargs["params"])
+            return self.fred_api_response_obs()
         if self.url == API_ENDPOINTS["USBLS_API_URL"]:
-            return self.usbls_api_response(self.kwargs["data"])
+            return self.usbls_api_response()
         raise RuntimeError(
             "Network access not allowed during testing! "
             f"No mock response for this url: {self.url}"
         )
 
-    def fred_api_response_obs(self, params):
+    def fred_api_response_obs(self):
         """ fred api response format for obesrvations"""
+        params = self.kwargs.get("params")
         obs_val_dict = {
-            "realtime_start": self.today_date,
-            "realtime_end": self.today_date,
+            "realtime_start": "2021-02-15",
+            "realtime_end": "2021-02-15",
             "date": "1980-01-01",
             "value": "13.82",
         }
-        resp = {
-            "realtime_start": self.today_date,
-            "realtime_end": self.today_date,
+        response = {
+            "realtime_start": "2021-02-15",
+            "realtime_end": "2021-02-15",
             "observation_start": params.get("observation_start"),
             "observation_end": params.get("observation_end"),
             "units": params.get("units", "lin"),
@@ -62,18 +62,19 @@ class MockAPIResponse:
             "limit": 100000,
             "observations": [obs_val_dict],
         }
-        return resp
+        return response
 
-    def fred_api_response_ser(self, params):
+    def fred_api_response_ser(self):
         """fred api response format for obesrvations"""
-        resp = {
-            "realtime_start": self.today_date,
-            "realtime_end": self.today_date,
+        params = self.kwargs.get("params")
+        response = {
+            "realtime_start": "2021-02-15",
+            "realtime_end": "2021-02-15",
             "seriess": [
                 {
                     "id": "FEDFUNDS",
-                    "realtime_start": self.today_date,
-                    "realtime_end": self.today_date,
+                    "realtime_start": "2021-02-15",
+                    "realtime_end": "2021-02-15",
                     "title": "Mock series name",
                     "observation_start": params.get("observation_start"),
                     "observation_end": params.get("observation_end"),
@@ -81,78 +82,21 @@ class MockAPIResponse:
                 }
             ],
         }
-        return resp
+        return response
 
     def usbls_api_response(self, seriesids):
         raise NotImplementedError
 
 
+def load_test_data(filepath):
+    """Load test data from json files
+    """
+    with open(filepath) as data:
+        my_dict = json.load(data)
+    return my_dict
+
+
 @pytest.fixture
 def expected_result_get_fred_data():
-    result = (
-        [
-            {
-                "realtime_start": dt.date.today().strftime("%Y-%m-%d"),
-                "realtime_end": dt.date.today().strftime("%Y-%m-%d"),
-                "observation_start": "1980-01-08",
-                "observation_end": None,
-                "units": "lin",
-                "output_type": 1,
-                "file_type": "json",
-                "order_by": "observation_date",
-                "sort_order": "asc",
-                "count": 3,
-                "offset": 0,
-                "limit": 100000,
-                "observations": [
-                    {
-                        "realtime_start": dt.date.today().strftime("%Y-%m-%d"),
-                        "realtime_end": dt.date.today().strftime("%Y-%m-%d"),
-                        "date": "1980-01-01",
-                        "value": "13.82",
-                    },
-                ],
-            },
-            {
-                "realtime_start": dt.date.today().strftime("%Y-%m-%d"),
-                "realtime_end": dt.date.today().strftime("%Y-%m-%d"),
-                "observation_start": "1980-01-08",
-                "observation_end": None,
-                "units": "lin",
-                "output_type": 1,
-                "file_type": "json",
-                "order_by": "observation_date",
-                "sort_order": "asc",
-                "count": 3,
-                "offset": 0,
-                "limit": 100000,
-                "observations": [
-                    {
-                        "realtime_start": dt.date.today().strftime("%Y-%m-%d"),
-                        "realtime_end": dt.date.today().strftime("%Y-%m-%d"),
-                        "date": "1980-01-01",
-                        "value": "13.82",
-                    },
-                ],
-            },
-        ],
-        [
-            {
-                "name": "Mock series name",
-                "series_id": "FEDFUNDS",
-                "frequency": "m",
-                "units": "lin",
-                "aggregation_method": None,
-                "seasonal_adjustment": None,
-            },
-            {
-                "name": "Mock series name",
-                "series_id": "DFF",
-                "frequency": "m",
-                "units": "lin",
-                "aggregation_method": "eop",
-                "seasonal_adjustment": None,
-            },
-        ],
-    )
-    return result
+    data = tuple(load_test_data("tests/data_retrieval/expected_result_get_fred_data.json"))
+    return data
