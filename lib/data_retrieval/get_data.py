@@ -1,5 +1,6 @@
 from collections import defaultdict
-import datetime
+import datetime as dt
+from typing import Tuple
 import re
 import json
 from loguru import logger
@@ -7,7 +8,9 @@ import requests
 from config.config import API_ENDPOINTS
 
 
-def get_fred_data(api_key: str, series_params: list, start_date: str = None, end_date: str = None):
+def get_fred_data(
+    api_key: str, series_params: list, start_date: dt.date = None, end_date: dt.date = None
+) -> Tuple[list, list]:
     """Get multiple series data and info from fred api
     and group in two lists (one info, one data)
 
@@ -31,7 +34,7 @@ def get_fred_data(api_key: str, series_params: list, start_date: str = None, end
     info_list: list
         List of dictionaries with metadata for every series retrieved
     obs_list: list
-        List of dictionaries with data reponse from fred api in json format
+        List of dictionaries with data reponse from fred api in json format or dict
     """
     format_params = {
         "api_key": api_key,
@@ -56,6 +59,7 @@ def get_fred_data(api_key: str, series_params: list, start_date: str = None, end
         obs_content = obs_resp.json()
 
         info_dict = {
+            "provider": "fred",
             "name": info_series.get("title"),
             "series_id": params["series_id"],
             "frequency": params.get("frequency"),
@@ -70,8 +74,8 @@ def get_fred_data(api_key: str, series_params: list, start_date: str = None, end
 
 
 def get_usbls_data(
-    api_key: str, series_ids: list, start_date: datetime.date, end_date: datetime.date = None
-):
+    api_key: str, series_ids: list, start_date: dt.date, end_date: dt.date = None
+) -> Tuple[list, list]:
     """Get multiple series data and info from fred api
     and group in two lists (one info, one data)
 
@@ -84,7 +88,7 @@ def get_usbls_data(
         List of ids US BLS series
     start_date: datetime.date
         The start of the observation period. USBLS only sends data for whole years
-    end_date: datetime.data
+    end_date: datetime.date
         The start of the observation period. USBLS only sends data for whole years
 
     Returns
@@ -92,7 +96,7 @@ def get_usbls_data(
     info_list: list
         List of dictionaries with metadata for every series retrieved
     data_list: list
-        List of dictionaries with data reponse from fred api in json format
+        List of dictionaries with data reponse from fred api in json format or dict
     """
     headers = {"Content-type": "application/json"}
     payload = {"registrationkey": api_key, "catalog": True, "seriesid": series_ids}
@@ -100,7 +104,7 @@ def get_usbls_data(
     # years limited at 20 per query on usbls API v2
     # build 20 yeard periods, query for each one
     if end_date is None:
-        end_date = datetime.date.today()
+        end_date = dt.date.today()
     start_year = int(start_date.strftime("%Y"))
     end_year = int(end_date.strftime("%Y"))
     periods = []
@@ -123,6 +127,7 @@ def get_usbls_data(
     info_list = []
     for i, series_id in enumerate(series_ids):
         info_dict = {
+            "provider": "usbls",
             "name": data[i]["catalog"]["survey_name"],
             "series_id": series_id,
             "frequency": None,
