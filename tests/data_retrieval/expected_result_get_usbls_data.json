@@ -1,1 +1,34 @@
-[[[{"year": "1995", "period": "M12", "periodName": "December", "value": "153.5", "footnotes": [{}]}], []], [{"name": "CPI for All Urban Consumers (CPI-U)", "series_id": "CUUR0000SA0", "frequency": null, "units": null, "aggregation_method": null, "seasonal_adjustment": "nsa"}, {"name": "Chained CPI for All Urban Consumers, U.S. city average (C-CPI-U)", "series_id": "SUUR0000SA0", "frequency": null, "units": null, "aggregation_method": null, "seasonal_adjustment": "nsa"}]]
+[
+    [
+        [
+            {
+                "year": "1995",
+                "period": "M12",
+                "periodName": "December",
+                "value": "153.5",
+                "footnotes": [{}]
+            }
+        ],
+        []
+    ],
+    [
+        {
+            "provider": "usbls",
+            "name": "CPI for All Urban Consumers (CPI-U)",
+            "series_id": "CUUR0000SA0",
+            "frequency": null,
+            "units": null,
+            "aggregation_method": null,
+            "seasonal_adjustment": "nsa"
+        },
+        {
+            "provider": "usbls",
+            "name": "Chained CPI for All Urban Consumers, U.S. city average (C-CPI-U)",
+            "series_id": "SUUR0000SA0",
+            "frequency": null,
+            "units": null,
+            "aggregation_method": null,
+            "seasonal_adjustment": "nsa"
+        }
+    ]
+]
