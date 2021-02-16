@@ -29,7 +29,10 @@ def clean_received_data(
     for i, obs_data in enumerate(obs_data_list):
         if info_data_list[i].get("series_id") is None:
             raise KeyError("No 'series_id' in info_data: this key is mandatory.")
-        cleaned_series = series_cleaner(obs_data=obs_data)
+        if len(obs_data) > 0:
+            cleaned_series = series_cleaner(obs_data=obs_data)
+        else:  # no obs
+            cleaned_series = pd.DataFrame(columns=["date", "value"])
         series_name = give_name_to_series(info_data_list[i])
         cleaned_series.rename(columns={"value": series_name}, inplace=True)
         cleaned_data_list.append(cleaned_series)
@@ -48,13 +51,16 @@ def clean_received_data(
 def give_name_to_series(info_data: dict) -> str:
     """Give name to series using metadata about the series"""
     name_components = []
-    for field in [
+    if "series_id" not in info_data.keys():
+        raise KeyError("No 'series_id' in info_data: this key is mandatory.")
+    fields_list = [
         "series_id",
         "frequency",
         "units",
         "aggregation_method",
         "seasonal_adjustment",
-    ]:
+    ]
+    for field in fields_list:
         if info_data.get(field):
             name_components.append(info_data[field])
     series_name = "_".join(name_components)
