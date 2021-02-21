@@ -61,6 +61,8 @@ class FREDGetter(TemplateGetter):
         """
         if not isinstance(series_params, list):
             raise TypeError("'series_params' must be a list.")
+        if len(series_params) == 0:
+            raise ValueError("'series_params' must contain at least one element.")
 
         if end_date is None:
             end_date = dt.date.today()
@@ -223,6 +225,9 @@ class USBLSGetter(TemplateGetter):
         """
         if not isinstance(series_params, list):
             raise TypeError("'series_params' must be a list.")
+        print(series_params)
+        if len(series_params) == 0:
+            raise ValueError("'series_params' must contain at least one element.")
 
         if end_date is None:
             end_date = dt.date.today()
@@ -325,6 +330,10 @@ class OECDGetter(MinimalGetter):
     def get_data(
         self, series_params: list, start_date: dt.date, end_date: dt.date = None
     ) -> Tuple[pd.DataFrame, List[dict]]:
+        if not isinstance(series_params, list):
+            raise TypeError("'series_params' must be a list.")
+        if len(series_params) == 0:
+            raise ValueError("'series_params' must contain at least one element.")
         if end_date is None:
             end_date = dt.date.today()
 
@@ -343,6 +352,9 @@ class OECDGetter(MinimalGetter):
     def get_data_from_one_dataset(
         self, series_params: dict, start_date: dt.date, end_date: dt.date = None
     ) -> Tuple[pd.DataFrame, List[dict]]:
+        if not isinstance(series_params, dict):
+            raise TypeError("'series_params' must be a dict.")
+
         if end_date is None:
             end_date = dt.date.today()
 

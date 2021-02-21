@@ -34,7 +34,7 @@ def get_data_from_apis(
     for provider, Getter in getters.items():
         getter = Getter(api_key=api_keys[provider])
         data, info = getter.get_data(
-            series_params=api_params[provider]["series_params"][:2],
+            series_params=api_params[provider]["series_params"],
             start_date=data_start_date,
             end_date=data_end_date,
         )
