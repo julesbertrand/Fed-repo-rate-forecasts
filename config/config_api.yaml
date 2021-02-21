@@ -1,8 +1,6 @@
 data_start_date: 1954-07-07
 
-fred:
-  FRED_API_URL_OBS: "https://api.stlouisfed.org/fred/series/observations?"
-  FRED_API_URL_SER: "https://api.stlouisfed.org/fred/series?"
+FRED:
   series_params:
     - frequency: m
       series_id: FEDFUNDS
@@ -81,8 +79,7 @@ fred:
     
     
 
-usbls:
-  USBLS_API_URL: 'https://api.bls.gov/publicAPI/v2/timeseries/data/'
+USBLS:
   series_params:
     - CUSR0000SA0
     - CUSR0000SA0E
