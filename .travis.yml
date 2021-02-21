@@ -1,14 +1,22 @@
 language: python
 
 python:
-  - '3.7'
+  - '3.8'
 
 # Install dependencies
 install:
-  - pip install --user -r requirements.txt
-  - python setup.py install
+  - pip install -r requirements.txt
+  - pip install pylint
+  - pip install pytest-cov
 
-# Run the tests
+# Run linting and tests
+before_script:
+  - export PYTHONPATH="$(pwd):$PYTHONPATH"
+
 script:
-  - pylint
-  - pytest
+  # - pylint -E config lib tests
+  - pytest -v --cov-report term-missing --cov=lib tests
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
+    

@@ -1,0 +1,64 @@
+---
+- - realtime_start: '2021-02-15'
+    realtime_end: '2021-02-15'
+    observation_start: '1980-01-08'
+    observation_end: '2021-02-21'
+    units: lin
+    output_type: 1
+    file_type: json
+    order_by: observation_date
+    sort_order: asc
+    count: 3
+    offset: 0
+    limit: 100000
+    observations:
+    - realtime_start: '2021-02-15'
+      realtime_end: '2021-02-15'
+      date: '1980-01-01'
+      value: '13.82'
+  - realtime_start: '2021-02-15'
+    realtime_end: '2021-02-15'
+    observation_start: '1980-01-08'
+    observation_end: '2021-02-21'
+    units: lin
+    output_type: 1
+    file_type: json
+    order_by: observation_date
+    sort_order: asc
+    count: 3
+    offset: 0
+    limit: 100000
+    observations:
+    - realtime_start: '2021-02-15'
+      realtime_end: '2021-02-15'
+      date: '1980-01-01'
+      value: '13.82'
+- - provider: FRED
+    name: Mock series name
+    series_id: FEDFUNDS
+    frequency: m
+    units: "%"
+    aggregation_method:
+    seasonal_adjustment: nsa
+    start_date: '1980-01-08'
+    end_date: '2021-02-21'
+    other:
+      id: FEDFUNDS
+      realtime_start: '2021-02-15'
+      realtime_end: '2021-02-15'
+      notes: mock notes
+  - provider: FRED
+    name: Mock series name
+    series_id: DFF
+    frequency: m
+    units: "%"
+    aggregation_method: eop
+    seasonal_adjustment: nsa
+    start_date: '1980-01-08'
+    end_date: '2021-02-21'
+    other:
+      id: FEDFUNDS
+      realtime_start: '2021-02-15'
+      realtime_end: '2021-02-15'
+      notes: mock notes
+
