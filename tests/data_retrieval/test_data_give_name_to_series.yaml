@@ -1,0 +1,77 @@
+---
+- - aggregation_method:
+    end_date: '2021-01-01'
+    frequency: m
+    name: Effective Federal Funds Rate
+    other:
+      frequency: Monthly
+      frequency_short: M
+      id: FEDFUNDS
+      last_updated: '2021-02-01 15:23:02-06'
+      popularity: 95
+      realtime_end: '2021-02-21'
+      realtime_start: '2021-02-21'
+      seasonal_adjustment: Not Seasonally Adjusted
+      units: Percent
+    provider: FRED
+    seasonal_adjustment: nsa
+    series_id: FEDFUNDS
+    start_date: '1954-07-01'
+    units: "%"
+  - aggregation_method: eop
+    end_date: '2021-02-18'
+    frequency: m
+    name: Effective Federal Funds Rate
+    other:
+      frequency: Daily, 7-Day
+      frequency_short: D
+      id: DFF
+      last_updated: '2021-02-19 15:22:06-06'
+      popularity: 80
+      realtime_end: '2021-02-21'
+      realtime_start: '2021-02-21'
+      seasonal_adjustment: Not Seasonally Adjusted
+      units: Percent
+    provider: FRED
+    seasonal_adjustment: nsa
+    series_id: DFF
+    start_date: '1954-07-01'
+    units: "%"
+  - aggregation_method:
+    end_date_date: To be Implemented
+    frequency:
+    name: CPI for All Urban Consumers (CPI-U)
+    other:
+      area: U.S. city average
+      item: All items
+      measure_data_type: All items
+      series_id: CUSR0000SA0
+      series_title: |-
+        All items in U.S. city average, all urban consumers, seasonally
+        adjusted
+      survey_abbreviation: CU
+    provider: USBLS
+    seasonal_adjustment: sa
+    series_id: CUSR0000SA0
+    start_date: To be Implemented
+    units:
+  - aggregation_method:
+    end_date_date: To be Implemented
+    frequency:
+    name: CPI for All Urban Consumers (CPI-U)
+    other:
+      area: U.S. city average
+      item: Energy
+      measure_data_type: Energy
+      series_id: CUSR0000SA0E
+      series_title: Energy in U.S. city average, all urban consumers, seasonally adjusted
+      survey_abbreviation: CU
+    provider: USBLS
+    seasonal_adjustment: sa
+    series_id: CUSR0000SA0E
+    start_date: To be Implemented
+    units:
+- - FEDFUNDS_%_m_nsa
+  - DFF_%_m_eop_nsa
+  - CUSR0000SA0_sa
+  - CUSR0000SA0E_sa
