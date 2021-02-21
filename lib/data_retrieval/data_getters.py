@@ -381,7 +381,7 @@ class OECDGetter(MinimalGetter):
         obs_df = self._assign_dimensions(obs_df=obs_df, dimensions=retrieved_dimensions)
         obs_df["date"] = pd.PeriodIndex(obs_df["period"], freq="Q").to_timestamp()
 
-        temp_metadata = obs_df.drop(columns=["period", "value"]).drop_duplicates()
+        temp_metadata = obs_df.drop(columns=["period", "date", "value"]).drop_duplicates()
         temp_metadata_list = temp_metadata.to_dict(orient="records")
         metadata_list = []
         for series_info in temp_metadata_list:
