@@ -5,12 +5,12 @@ import requests
 from lib.data_retrieval.getter_templates import MinimalGetter, TemplateGetter
 
 
-def test_minimal_getter_init():
+def test_minimalgetter_init():
     getter = MinimalGetter()
     assert getter is not None
 
 
-def test_minimal_getter_check_response():
+def test_minimalgetter_check_response():
     getter = MinimalGetter()
     # pylint: disable=protected-access
     response = requests.get(url="test_url")
@@ -18,7 +18,7 @@ def test_minimal_getter_check_response():
         getter._check_response_status_code(response)
 
 
-def test_template_getter_init():
+def test_templategetter_init():
     getter = TemplateGetter(
         api_key="mock_api_key", api_endpoint="mock_api_endpoint", date_format="mock_date_format"
     )
@@ -47,6 +47,7 @@ def test_give_name_to_series(test_data_give_name_to_series):
         api_key="mock_api_key", api_endpoint="mock_api_endpoint", date_format="mock_date_format"
     )
     series_info, expected_result = test_data_give_name_to_series
+    # pylint: disable=protected-access
     test_result = getter._give_name_to_series(series_info)
     assert test_result == expected_result
 
@@ -57,4 +58,5 @@ def test_give_name_to_series_exception_raised(info_data):
         api_key="mock_api_key", api_endpoint="mock_api_endpoint", date_format="mock_date_format"
     )
     with pytest.raises(KeyError):
+        # pylint: disable=protected-access
         getter._give_name_to_series(info_data)
