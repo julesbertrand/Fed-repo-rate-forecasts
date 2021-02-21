@@ -1,6 +1,7 @@
 from collections import defaultdict
 import datetime as dt
-from typing import Tuple, Union
+from typing import Tuple, Union, List
+from math import ceil
 import re
 import json
 from loguru import logger
@@ -10,7 +11,8 @@ import numpy as np
 import pandas as pd
 
 from config.config import API_ENDPOINTS
-from lib.data_retrieval.getter_templates import TemplateGetter
+from lib.data_retrieval.getter_templates import TemplateGetter, MinimalGetter
+from lib.utils import merge_df_list_on
 
 
 class FREDGetter(TemplateGetter):
@@ -247,7 +249,8 @@ class USBLSGetter(TemplateGetter):
         return obs_data_list, metadata_list
 
     # pylint: disable=arguments-differ
-    def _get_series_metadata(self, catalog: dict, series_id: str) -> dict:
+    @staticmethod
+    def _get_series_metadata(catalog: dict, series_id: str) -> dict:
         info_dict = {
             "provider": "USBLS",
             "name": catalog.pop("survey_name"),
@@ -281,3 +284,202 @@ class USBLSGetter(TemplateGetter):
         )
         series.drop(columns=series.columns.difference(["value", "date"]), inplace=True)
         return series
+
+
+class OECDGetter(MinimalGetter):
+    api_endpoint = API_ENDPOINTS["OECD"]
+    date_format = "{:4d}-Q{:1d}"
+    max_results_per_request = 1e6
+    max_url_length = 1e3
+
+    def __init__(self, api_key: str):
+        self.api_key = api_key
+        MinimalGetter.__init__(self)
+
+    def __build_oecd_request_url(self, dataset_id: str, dimensions: list):
+        dimensions_agg = ["+".join(d) for d in dimensions]
+        dimensions_agg = ".".join(dimensions_agg)
+        url = f"{self.api_endpoint}/{dataset_id}/{dimensions_agg}/all"
+        return url
+
+    @staticmethod
+    def _datetime_to_oecd_date_format(date: dt.date) -> str:
+        year, month = map(int, date.strftime("%Y-%m").split("-"))
+        quarter = ceil(month / 3)
+        new_date = f"{year}-Q{quarter}"
+        return new_date
+
+    @staticmethod
+    def _oecd_date_to_datetime_format(date: str) -> dt.date:
+        year, quarter = int(date[:4]), int(date[-1])
+        new_date = dt.date(year=year, month=quarter * 3)
+        return new_date
+
+    # pylint: disable=arguments-differ
+    def _fetch_data(self, url: str, params: dict = None) -> Union[dict, list]:
+        response = requests.get(url=url, params=params)
+        self._check_response_status_code(response)
+        response_json = response.json()
+        return response_json
+
+    def get_data(
+        self, series_params: list, start_date: dt.date, end_date: dt.date = None
+    ) -> Tuple[pd.DataFrame, List[dict]]:
+        if end_date is None:
+            end_date = dt.date.today()
+
+        metadata_list = []
+        obs_df_list = []
+        for dataset_series_params in series_params:
+            obs_df, metadata_sublist = self.get_data_from_one_dataset(
+                series_params=dataset_series_params, start_date=start_date, end_date=end_date
+            )
+            metadata_list += metadata_sublist
+            obs_df_list.append(obs_df)
+
+        merged_data = merge_df_list_on(obs_df_list, on="date")
+        return merged_data, metadata_list
+
+    def get_data_from_one_dataset(
+        self, series_params: dict, start_date: dt.date, end_date: dt.date = None
+    ) -> Tuple[pd.DataFrame, List[dict]]:
+        if end_date is None:
+            end_date = dt.date.today()
+
+        dataset_id = series_params.pop("dataset_id")
+        dimensions = list(series_params.get("dimensions").values())
+        url = self.__build_oecd_request_url(dataset_id, dimensions)
+
+        params = {
+            "startTime": self._datetime_to_oecd_date_format(start_date),
+            "endTime": self._datetime_to_oecd_date_format(end_date),
+            "dimensionAtObservation": "allDimensions",
+            "pid": self.api_key,
+        }
+
+        logger.info(f"Retrieving data at {self.api_endpoint} in dataset '{dataset_id}'...")
+        response = self._fetch_data(url=url, params=params)
+        obs_list = response.get("dataSets")[0].get("observations")
+
+        if len(obs_list) == 0:
+            logger.warning(
+                f"No available records for \n dimensions: {dimensions} \n parameters: {params}."
+            )
+            obs_df = []
+            metadata_list = []
+            return obs_df, metadata_list
+        logger.info("Data retrieved successfully.")
+
+        logger.info("Cleaning retrieved data...")
+        retrieved_dimensions = response.get("structure").get("dimensions").get("observation")
+        retrieved_attributes = response.get("structure").get("attributes").get("observation")
+
+        obs_df = pd.DataFrame(
+            obs_list,
+        ).transpose()
+        obs_df = self._assign_attributes(obs_df=obs_df, attributes=retrieved_attributes)
+        obs_df = self._assign_dimensions(obs_df=obs_df, dimensions=retrieved_dimensions)
+        obs_df["date"] = pd.PeriodIndex(obs_df["period"], freq="Q").to_timestamp()
+
+        temp_metadata = obs_df.drop(columns=["period", "value"]).drop_duplicates()
+        temp_metadata_list = temp_metadata.to_dict(orient="records")
+        metadata_list = []
+        for series_info in temp_metadata_list:
+            info_dict = self._get_metadata(series_info)
+            metadata_list.append(info_dict)
+
+        data = obs_df.pivot_table(
+            index=["date"], columns=["subject", "country", "measure"], values=["value"]
+        )
+        # remove unusefull level "values" from index
+        data.columns = data.columns.droplevel(0)
+        # flatten multindex to get custom series id
+        data.columns = ["_".join(col).strip() for col in data.columns.values]
+        # "date" moved from index to column
+        data = data.reset_index(drop=False)
+        logger.info("Data cleaned and merged succesfully.")
+
+        return data, metadata_list
+
+    def _assign_attributes(self, obs_df: pd.DataFrame, attributes: list) -> pd.DataFrame:
+        attr_col_names = ["value"] + list(map(lambda x: x.get("id").lower(), attributes))
+        obs_df = obs_df.rename(columns=dict(enumerate(attr_col_names)))
+        for i, col_name in enumerate(attr_col_names[1:]):
+            attributes_values = attributes[i].get("values")
+            if attributes_values is None or len(attributes_values) == 0:
+                pass
+            else:
+                obs_df[col_name] = obs_df[col_name].apply(
+                    lambda x: self.__extract_attribute_value(
+                        attributes_values=attributes_values, key=x, id_or_name="id"
+                    )
+                )
+
+        return obs_df
+
+    def _assign_dimensions(self, obs_df: pd.DataFrame, dimensions: list) -> pd.DataFrame:
+        obs_df["dimensions_ids"] = obs_df.index.map(lambda x: re.findall(r"\d+", x))
+        for i, dim in enumerate(dimensions):
+            dim_name = dim.get("name").lower()
+            values = dim.get("values")
+            key_pos = dim.get("keyPosition")
+            if key_pos is None:
+                key_pos = i
+
+            obs_df[dim_name] = obs_df["dimensions_ids"].apply(
+                lambda x: self.__extract_dimension_value(
+                    dimensions_ids=x, dimensions_values=values, key_pos=key_pos, id_or_name="id"
+                )
+            )
+
+        obs_df = obs_df.drop(columns=["dimensions_ids"]).reset_index(drop=True)
+        return obs_df
+
+    @staticmethod
+    def __extract_dimension_value(
+        dimensions_ids: list, dimensions_values: List[dict], key_pos: int, id_or_name: str = "id"
+    ) -> str:
+        if id_or_name not in ["id", "name"]:
+            raise ValueError(
+                f"Dimensions of index can only be 'id' or 'name'. Current value: {id_or_name}"
+            )
+        idx = dimensions_ids[key_pos]
+        dim = dimensions_values[int(idx)].get("id")
+        return dim
+
+    @staticmethod
+    def __extract_attribute_value(
+        attributes_values: list, key: Union[int, None], id_or_name
+    ) -> str:
+        if id_or_name not in ["id", "name"]:
+            raise ValueError(
+                f"Dimensions of index can only be 'id' or 'name'. Current value: {id_or_name}"
+            )
+        if pd.isna(key):
+            return np.nan
+        attr = attributes_values[int(key)].get(id_or_name)
+        return attr
+
+    @staticmethod
+    def _get_metadata(series_info: dict) -> dict:
+        series_id = "_".join(
+            [series_info.get("subject"), series_info.get("country"), series_info.get("measure")]
+        )
+        if re.search(r"SA$", series_info.get("measure")):
+            seasonal_adjustment = "sa"
+        else:
+            seasonal_adjustment = "nsa"
+
+        info_dict = {
+            "provider": "OECD",
+            "name": "To be implemented",
+            "series_id": series_id,
+            "frequency": series_info.get("frequency").lower(),
+            "units": series_info.get("unit").lower(),
+            "aggregation_method": None,
+            "seasonal_adjustment": seasonal_adjustment,
+            "start_date": "To be Implemented",
+            "end_date_date": "To be Implemented",
+            "other": series_info,
+        }
+        return info_dict

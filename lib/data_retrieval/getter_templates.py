@@ -1,9 +1,10 @@
 import datetime as dt
 from typing import Tuple, Union, List
-from functools import reduce
 
 import pandas as pd
 from loguru import logger
+
+from lib.utils import merge_df_list_on
 
 
 class MinimalGetter:
@@ -63,12 +64,12 @@ class TemplateGetter(MinimalGetter):
             List of dictionaries with metadata for every series retrieved.
         """
         logger.info(f"Retrieving data at {self.url} ...")
-        series_obs_list, series_info_list = self.get_multiple_series(
+        obs_data_list, metadata_list = self.get_multiple_series(
             series_params, start_date, end_date
         )
         logger.info("Data retrieved successfully.")
-        obs_df = self.clean_received_data(series_obs_list, series_info_list)
-        return obs_df, series_info_list
+        obs_df = self.clean_received_data(obs_data_list, metadata_list)
+        return obs_df, metadata_list
 
     def get_multiple_series(
         self, series_params: list, start_date: dt.date, end_date: dt.date = None
@@ -107,14 +108,14 @@ class TemplateGetter(MinimalGetter):
         cleaned_series.astype({"value": float})
         return cleaned_series
 
-    def clean_received_data(self, series_obs_list: list, series_info_list: list) -> pd.DataFrame:
+    def clean_received_data(self, obs_data_list: list, metadata_list: list) -> pd.DataFrame:
         """Clean output from self.get_multiple_series to get an aggregated dataframe
 
         Parameters
         ----------
-        series_obs_list: list
+        obs_data_list: list
             List of all fred responses bodies in json format
-        series_info_list
+        metadata_list
             List of dicts containing metadata about every retrieved series
 
         Raises
@@ -129,18 +130,15 @@ class TemplateGetter(MinimalGetter):
         """
         logger.info("Cleaning retrieved data...")
         cleaned_data_list = []
-        for i, obs_data in enumerate(series_obs_list):
-            if series_info_list[i].get("series_id") is None:
+        for i, obs_data in enumerate(obs_data_list):
+            if metadata_list[i].get("series_id") is None:
                 raise KeyError("No 'series_id' in info_data: this key is mandatory.")
             cleaned_series = self.clean_series(obs_data)
-            series_name = self._give_name_to_series(series_info_list[i])
+            series_name = self._give_name_to_series(metadata_list[i])
             cleaned_series.rename(columns={"value": series_name}, inplace=True)
             cleaned_data_list.append(cleaned_series)
 
-        merged_data = reduce(
-            lambda left, right: pd.merge(left, right, on="date", how="outer"),
-            cleaned_data_list,
-        )
+        merged_data = merge_df_list_on(cleaned_data_list, on="date")
         logger.info("Data cleaned and merged succesfully.")
         return merged_data
 

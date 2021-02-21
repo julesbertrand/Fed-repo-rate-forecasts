@@ -87,3 +87,20 @@ USBLS:
     - LNS12300000
     - LNS13000000
     - LNS14000000
+
+OECD:
+  series_params:
+    - dataset_id: QNA
+      dimensions:
+        countries:
+        - USA
+        - OECD
+        - G-20
+        subject:
+        - B1_GE
+        measure:
+        - VPVOBARSA
+        - HVPVOBARSA
+        - GPSA
+        frequency:
+        - Q

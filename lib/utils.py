@@ -1,11 +1,19 @@
-import numpy as np
-import pandas as pd
-import datetime as dt
 from glob import glob
 import ntpath
 import os
+from functools import reduce
+from typing import List
 import joblib
 import yaml
+import pandas as pd
+
+
+def merge_df_list_on(df_list: List[pd.DataFrame], on: str) -> pd.DataFrame:
+    merged_data = reduce(
+        lambda left, right: pd.merge(left, right, on=on, how="outer"),
+        df_list,
+    )
+    return merged_data
 
 
 def get_file_names(path="Data/", extension=".csv"):
@@ -123,9 +131,5 @@ def save_files(path: str, files: dict, overwrite: bool = False):
         ).center(120, "-")
     )
     if len(files_not_saved) > 0:
-        print(
-            " {:d} file(s) could not be saved: ".format(len(files_not_saved)).center(
-                120, "-"
-            )
-        )
+        print(" {:d} file(s) could not be saved: ".format(len(files_not_saved)).center(120, "-"))
         print("\n".join(files_not_saved))
