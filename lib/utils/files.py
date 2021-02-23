@@ -14,7 +14,7 @@ def get_projet_root() -> Path:
     -------
     pathlib.Path
     """
-    return Path(__file__).parent.parent
+    return Path(__file__).parent.parent.parent
 
 
 def create_dir_if_missing(filepath: str):
@@ -42,6 +42,8 @@ def get_valid_filename(filename: str) -> str:
     """
     new_s = str(filename).strip().replace(" ", "_").lower()
     new_s = re.sub(r"(?u)[^-\w.]", r"", new_s)
+    if new_s in [None, "", "_", " "]:
+        raise ValueError(f"{filename} cannot be converted to a valid file name")
     return new_s
 
 
@@ -68,7 +70,7 @@ def open_file(filepath: str, sep: str = ";"):
     return content
 
 
-def open_files(dirpath: str, pattern: str = "*.csv") -> dict:
+def open_files(dirpath: str, files_list: list) -> dict:
     """
     Open the files given their common path and all files names to retrieve.
     pandas red_csv if csv, yaml if yaml, joblib otherwise
@@ -79,10 +81,9 @@ def open_files(dirpath: str, pattern: str = "*.csv") -> dict:
         Dict of filename: file_content
     """
     dirpath = Path(dirpath)
-    files_list = list_files(dirpath, pattern)
     files_dict = {}
-    for file_name in files_list:
-        files_dict[file_name] = open_file(dirpath / file_name)
+    for filename in files_list:
+        files_dict[filename] = open_file(dirpath / filename)
     return files_dict
 
 
