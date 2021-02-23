@@ -1,7 +1,7 @@
 import pandas as pd
 
 from lib.data_retrieval.get_data import get_data_from_apis
-from lib.utils import open_file
+from lib.utils.files import open_file
 
 from config.config import API_KEYS_FILEPATH, API_REQUESTS_PARAMS_FILEPATH, API_ENDPOINTS
 

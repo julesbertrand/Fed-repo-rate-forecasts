@@ -225,7 +225,6 @@ class USBLSGetter(TemplateGetter):
         """
         if not isinstance(series_params, list):
             raise TypeError("'series_params' must be a list.")
-        print(series_params)
         if len(series_params) == 0:
             raise ValueError("'series_params' must contain at least one element.")
 
