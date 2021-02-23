@@ -71,7 +71,7 @@
     series_id: CUSR0000SA0E
     start_date: To be Implemented
     units:
-- - FEDFUNDS_%_m_nsa
-  - DFF_%_m_eop_nsa
+- - FEDFUNDS_m_nsa
+  - DFF_m_eop_nsa
   - CUSR0000SA0_sa
   - CUSR0000SA0E_sa
