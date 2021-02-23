@@ -4,7 +4,7 @@ from typing import Tuple, Union, List
 import pandas as pd
 from loguru import logger
 
-from lib.utils import merge_df_list_on
+from lib.utils.df_utils import merge_df_list_on
 
 
 class MinimalGetter:

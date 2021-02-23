@@ -4,7 +4,8 @@ import datetime as dt
 import pandas as pd
 
 from lib.data_retrieval.data_getters import FREDGetter, USBLSGetter, OECDGetter
-from lib.utils import save_file, merge_df_list_on
+from lib.utils.files import save_file
+from lib.utils.df_utils import merge_df_list_on
 
 GETTERS = {"FRED": FREDGetter, "USBLS": USBLSGetter, "OECD": OECDGetter}
 

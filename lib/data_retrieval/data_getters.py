@@ -12,7 +12,7 @@ import pandas as pd
 
 from config.config import API_ENDPOINTS
 from lib.data_retrieval.getter_templates import TemplateGetter, MinimalGetter
-from lib.utils import merge_df_list_on
+from lib.utils.df_utils import merge_df_list_on
 
 
 class FREDGetter(TemplateGetter):

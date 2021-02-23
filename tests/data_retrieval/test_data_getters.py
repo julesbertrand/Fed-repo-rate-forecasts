@@ -13,6 +13,7 @@ def test_fredgetter_init():
 def test_fredgetter_get_multiple_series(expected_result_get_fred_data):
     getter = FREDGetter(api_key="mock_api_key")
     start_date = dt.date(1980, 1, 8)
+    end_date = dt.date(2021, 2, 21)
     test_params = [
         {"series_id": "FEDFUNDS", "units": "lin", "frequency": "m"},
         {"series_id": "DFF", "units": "lin", "frequency": "m", "aggregation_method": "eop"},
@@ -20,6 +21,7 @@ def test_fredgetter_get_multiple_series(expected_result_get_fred_data):
     test_result = getter.get_multiple_series(
         series_params=test_params,
         start_date=start_date,
+        end_date=end_date
     )
     assert test_result == expected_result_get_fred_data
 
