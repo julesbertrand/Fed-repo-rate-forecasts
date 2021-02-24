@@ -35,6 +35,7 @@ class MockAPIResponse:
         self.status_code = 200
 
     def raise_for_status(self):
+        """Mock raise for status, raises HTTP error for url='test_url'"""
         if self.url == "test_url":
             raise requests.HTTPError("Test Error")
 
@@ -46,6 +47,8 @@ class MockAPIResponse:
             return self.fred_api_response_obs()
         if self.url == API_ENDPOINTS["USBLS"]:
             return self.usbls_api_response()
+        if API_ENDPOINTS["OECD"] in self.url:
+            return self.oecd_api_response()
         raise NotImplementedError("This Getter Mock API Response does not exist")
 
     def fred_api_response_obs(self):
@@ -110,6 +113,12 @@ class MockAPIResponse:
         response = load_test_data("tests/data_retrieval/expected_usbls_mock_api_response.yaml")
         return response
 
+    @staticmethod
+    def oecd_api_response():
+        """oecd api mock response for post request"""
+        response = load_test_data("tests/data_retrieval/expected_oecd_mock_api_response.yaml")
+        return response
+
 
 def load_test_data(filepath):
     """Load test data from json file"""
@@ -119,6 +128,7 @@ def load_test_data(filepath):
 
 
 def pytest_generate_tests(metafunc):
+    """Generates test parametrization for files for some tests"""
     if "test_data_give_name_to_series" in metafunc.fixturenames:
         test_data = load_test_data("tests/data_retrieval/test_data_give_name_to_series.yaml")
         test_data_list = zip(*test_data)

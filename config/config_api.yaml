@@ -1,4 +1,5 @@
 data_start_date: 1954-07-07
+data_end_date: null
 
 FRED:
   series_params:

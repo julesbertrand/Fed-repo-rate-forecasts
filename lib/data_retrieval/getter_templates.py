@@ -1,10 +1,10 @@
 import datetime as dt
 from typing import Tuple, Union, List
-
-import pandas as pd
 from loguru import logger
 
-from lib.utils import merge_df_list_on
+import pandas as pd
+
+from lib.utils.df_utils import merge_df_list_on
 
 
 class MinimalGetter:
@@ -67,8 +67,8 @@ class TemplateGetter(MinimalGetter):
         obs_data_list, metadata_list = self.get_multiple_series(
             series_params, start_date, end_date
         )
-        logger.info("Data retrieved successfully.")
         obs_df = self.clean_received_data(obs_data_list, metadata_list)
+        logger.info("Data retrieved and cleaned successfully.")
         return obs_df, metadata_list
 
     def get_multiple_series(
@@ -128,7 +128,6 @@ class TemplateGetter(MinimalGetter):
         pd.DataFrame
             Aggregated data with names, in the right format
         """
-        logger.info("Cleaning retrieved data...")
         cleaned_data_list = []
         for i, obs_data in enumerate(obs_data_list):
             if metadata_list[i].get("series_id") is None:
@@ -139,7 +138,6 @@ class TemplateGetter(MinimalGetter):
             cleaned_data_list.append(cleaned_series)
 
         merged_data = merge_df_list_on(cleaned_data_list, on="date")
-        logger.info("Data cleaned and merged succesfully.")
         return merged_data
 
     @staticmethod
@@ -150,7 +148,6 @@ class TemplateGetter(MinimalGetter):
             raise KeyError("No 'series_id' in info_data: this key is mandatory.")
         fields_list = [
             "series_id",
-            "units",
             "frequency",
             "aggregation_method",
             "seasonal_adjustment",

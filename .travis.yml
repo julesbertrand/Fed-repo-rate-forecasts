@@ -14,7 +14,8 @@ before_script:
   - export PYTHONPATH="$(pwd):$PYTHONPATH"
 
 script:
-  # - pylint -E config lib tests
+  # - pylint --exit-zero config lib tests
+  # - pylint --disable=C config lib tests
   - pytest -v -rs --cov=lib tests
 
 after_success:

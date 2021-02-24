@@ -4,6 +4,7 @@ from typing import Tuple, Union, List
 from math import ceil
 import re
 import json
+from copy import deepcopy
 from loguru import logger
 import requests
 
@@ -12,7 +13,7 @@ import pandas as pd
 
 from config.config import API_ENDPOINTS
 from lib.data_retrieval.getter_templates import TemplateGetter, MinimalGetter
-from lib.utils import merge_df_list_on
+from lib.utils.df_utils import merge_df_list_on
 
 
 class FREDGetter(TemplateGetter):
@@ -63,9 +64,9 @@ class FREDGetter(TemplateGetter):
             raise TypeError("'series_params' must be a list.")
         if len(series_params) == 0:
             raise ValueError("'series_params' must contain at least one element.")
-
         if end_date is None:
             end_date = dt.date.today()
+        series_params = deepcopy(series_params)
 
         format_params = {
             "api_key": self.api_key,
@@ -225,14 +226,12 @@ class USBLSGetter(TemplateGetter):
         """
         if not isinstance(series_params, list):
             raise TypeError("'series_params' must be a list.")
-        print(series_params)
         if len(series_params) == 0:
             raise ValueError("'series_params' must contain at least one element.")
-
         if end_date is None:
             end_date = dt.date.today()
-        periods = self.__split_requests_time_range(start_date, end_date)
 
+        periods = self.__split_requests_time_range(start_date, end_date)
         headers = {"Content-type": "application/json"}
         payload = {"registrationkey": self.api_key, "catalog": True, "seriesid": series_params}
 
@@ -354,9 +353,9 @@ class OECDGetter(MinimalGetter):
     ) -> Tuple[pd.DataFrame, List[dict]]:
         if not isinstance(series_params, dict):
             raise TypeError("'series_params' must be a dict.")
-
         if end_date is None:
             end_date = dt.date.today()
+        series_params = deepcopy(series_params)
 
         dataset_id = series_params.pop("dataset_id")
         dimensions = list(series_params.get("dimensions").values())
@@ -380,9 +379,7 @@ class OECDGetter(MinimalGetter):
             obs_df = []
             metadata_list = []
             return obs_df, metadata_list
-        logger.info("Data retrieved successfully.")
 
-        logger.info("Cleaning retrieved data...")
         retrieved_dimensions = response.get("structure").get("dimensions").get("observation")
         retrieved_attributes = response.get("structure").get("attributes").get("observation")
 
@@ -409,8 +406,8 @@ class OECDGetter(MinimalGetter):
         data.columns = ["_".join(col).strip() for col in data.columns.values]
         # "date" moved from index to column
         data = data.reset_index(drop=False)
-        logger.info("Data cleaned and merged succesfully.")
 
+        logger.info("Data retrieved and cleaned successfully.")
         return data, metadata_list
 
     def _assign_attributes(self, obs_df: pd.DataFrame, attributes: list) -> pd.DataFrame:

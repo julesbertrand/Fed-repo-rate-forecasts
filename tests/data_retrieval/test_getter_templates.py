@@ -5,24 +5,33 @@ import requests
 from lib.data_retrieval.getter_templates import MinimalGetter, TemplateGetter
 
 
-def test_minimalgetter_init():
-    getter = MinimalGetter()
-    assert getter is not None
+@pytest.mark.parametrize(
+    "getter, kwargs",
+    [
+        (MinimalGetter, {}),
+        (
+            TemplateGetter,
+            {
+                "api_key": "mock_api_key",
+                "api_endpoint": "mock_api_endpoint",
+                "date_format": "mock_date_format",
+            },
+        ),
+    ],
+)
+def test_getter_init(getter, kwargs):
+    """Test instaciation of Getter"""
+    obj = getter(**kwargs)
+    assert obj is not None
 
 
 def test_minimalgetter_check_response():
+    """Test check response, reused in all getters classes"""
     getter = MinimalGetter()
     # pylint: disable=protected-access
     response = requests.get(url="test_url")
     with pytest.raises(requests.HTTPError):
         getter._check_response_status_code(response)
-
-
-def test_templategetter_init():
-    getter = TemplateGetter(
-        api_key="mock_api_key", api_endpoint="mock_api_endpoint", date_format="mock_date_format"
-    )
-    assert getter is not None
 
 
 @pytest.mark.parametrize(
@@ -35,6 +44,7 @@ def test_templategetter_init():
     ],
 )
 def test_parse_date(date, date_format, parsed_date):
+    """Test parse date function"""
     # pylint: disable=protected-access
     getter = TemplateGetter(
         api_key="mock_api_key", api_endpoint="mock_api_endpoint", date_format=date_format
@@ -43,6 +53,7 @@ def test_parse_date(date, date_format, parsed_date):
 
 
 def test_give_name_to_series(test_data_give_name_to_series):
+    """Test name attribution"""
     getter = TemplateGetter(
         api_key="mock_api_key", api_endpoint="mock_api_endpoint", date_format="mock_date_format"
     )
@@ -54,6 +65,7 @@ def test_give_name_to_series(test_data_give_name_to_series):
 
 @pytest.mark.parametrize("info_data", [{}, {"units": "lin"}])
 def test_give_name_to_series_exception_raised(info_data):
+    """Test name attribution for wrong inputs: raise error"""
     getter = TemplateGetter(
         api_key="mock_api_key", api_endpoint="mock_api_endpoint", date_format="mock_date_format"
     )

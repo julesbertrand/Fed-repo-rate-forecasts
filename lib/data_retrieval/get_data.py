@@ -4,7 +4,7 @@ import datetime as dt
 import pandas as pd
 
 from lib.data_retrieval.data_getters import FREDGetter, USBLSGetter, OECDGetter
-from lib.utils import save_file, merge_df_list_on
+from lib.utils.df_utils import merge_df_list_on
 
 GETTERS = {"FRED": FREDGetter, "USBLS": USBLSGetter, "OECD": OECDGetter}
 
@@ -14,12 +14,13 @@ def get_data_from_apis(
     api_params: dict,
     data_start_date: dt.date,
     data_end_date: dt.date = None,
-    metadata_filepath: str = "./data/metadata.yaml",
-    providers: list = ["FRED", "USBLS", "OECD"],
+    providers: list = None,
 ) -> pd.DataFrame:
     """Fetch, clean and merge data from Fred, USBLS and OECD in one DataFrame
     Save related metadata in one yaml file
     """
+    if providers is None:
+        providers = GETTERS.keys()
     getters = {k: v for k, v in GETTERS.items() if k in providers}
 
     for provider in getters.keys():
@@ -33,16 +34,14 @@ def get_data_from_apis(
     # pylint: disable=invalid-name
     for provider, Getter in getters.items():
         getter = Getter(api_key=api_keys[provider])
-        data, info = getter.get_data(
+        data, metadata = getter.get_data(
             series_params=api_params[provider]["series_params"],
             start_date=data_start_date,
             end_date=data_end_date,
         )
-        metadata_list.append(info)
+        metadata_list.append(metadata)
         obs_df_list.append(data)
 
-    merged_info = reduce(lambda left, right: left + right, metadata_list)
-    save_file(filepath=metadata_filepath, data=merged_info)
-
+    merged_metadata = reduce(lambda left, right: left + right, metadata_list)
     merged_data = merge_df_list_on(obs_df_list, on="date")
-    return merged_data
+    return merged_data, merged_metadata
