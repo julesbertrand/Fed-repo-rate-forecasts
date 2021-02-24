@@ -5,9 +5,10 @@ import pandas as pd
 from lib.data_retrieval.data_getters import FREDGetter, USBLSGetter, OECDGetter
 
 
-def test_fredgetter_init():
-    getter = FREDGetter(api_key="mock_api_key")
-    assert getter is not None
+@pytest.mark.parametrize("getter", [FREDGetter, USBLSGetter, OECDGetter])
+def test_getter_init(getter):
+    """Test instanciation of getters"""
+    assert getter(api_key="mock_api_key") is not None
 
 
 def test_fredgetter_get_multiple_series(expected_result_get_fred_data):
@@ -19,9 +20,7 @@ def test_fredgetter_get_multiple_series(expected_result_get_fred_data):
         {"series_id": "DFF", "units": "lin", "frequency": "m", "aggregation_method": "eop"},
     ]
     test_result = getter.get_multiple_series(
-        series_params=test_params,
-        start_date=start_date,
-        end_date=end_date
+        series_params=test_params, start_date=start_date, end_date=end_date
     )
     assert test_result == expected_result_get_fred_data
 
@@ -46,11 +45,6 @@ def test_fredgetter_clean_fred_series(test_data_clean_fred_series):
     assert test_obs_df.equals(expected_result)
 
 
-def test_usblsgetter_init():
-    getter = USBLSGetter(api_key="mock_api_key")
-    assert getter is not None
-
-
 def test_get_usbls_data(expected_result_get_usbls_data):
     getter = USBLSGetter(api_key="mock_api_key")
     start_date = dt.date(1995, 1, 1)
@@ -71,8 +65,3 @@ def test_get_usbls_data_exception_raised(series_params, error):
             series_params=series_params,
             start_date=dt.date(2018, 1, 1),
         )
-
-
-def test_oecdgetter_init():
-    getter = OECDGetter(api_key="mock_api_key")
-    assert getter is not None
