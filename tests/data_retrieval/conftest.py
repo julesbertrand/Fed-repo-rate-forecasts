@@ -46,6 +46,8 @@ class MockAPIResponse:
             return self.fred_api_response_obs()
         if self.url == API_ENDPOINTS["USBLS"]:
             return self.usbls_api_response()
+        if API_ENDPOINTS["OECD"] in self.url:
+            return self.oecd_api_response()
         raise NotImplementedError("This Getter Mock API Response does not exist")
 
     def fred_api_response_obs(self):
@@ -108,6 +110,11 @@ class MockAPIResponse:
             }
             return response
         response = load_test_data("tests/data_retrieval/expected_usbls_mock_api_response.yaml")
+        return response
+
+    def oecd_api_response(self):
+        """oecd api mock response for post request"""
+        response = load_test_data("tests/data_retrieval/expected_oecd_mock_api_response.yaml")
         return response
 
 

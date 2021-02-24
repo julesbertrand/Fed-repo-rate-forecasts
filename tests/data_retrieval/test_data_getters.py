@@ -26,7 +26,6 @@ def test_fredgetter_get_multiple_series(expected_result_get_fred_data):
     assert test_result == expected_result_get_fred_data
 
 
-@pytest.mark.get_data
 @pytest.mark.parametrize("series_params, error", [(None, TypeError), ([], ValueError)])
 def test_get_fred_data_exception_raised(series_params, error):
     with pytest.raises(error):

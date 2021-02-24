@@ -10,7 +10,7 @@ def test_minimalgetter_init():
     assert getter is not None
 
 
-def test_minimalgetter_check_response():
+def test_minimalgetter_check_response(mock_response_get):
     getter = MinimalGetter()
     # pylint: disable=protected-access
     response = requests.get(url="test_url")
