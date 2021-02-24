@@ -15,7 +15,7 @@ before_script:
 
 script:
   # - pylint --exit-zero config lib tests
-  - pylint --disable=C
+  # - pylint --disable=C config lib tests
   - pytest -v -rs --cov=lib tests
 
 after_success:
