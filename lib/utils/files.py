@@ -3,6 +3,7 @@ import os
 import re
 import yaml
 import joblib
+from unidecode import unidecode
 
 import pandas as pd
 
@@ -41,16 +42,23 @@ def get_valid_filename(filename: str) -> str:
     eg. "The cat is blue in été" -> "the_cat_is_blue_in_ete
     """
     new_s = str(filename).strip().replace(" ", "_").lower()
-    new_s = re.sub(r"(?u)[^-\w.]", r"", new_s)
+    new_s = unidecode(re.sub(r"(?u)[^-\w.]", r"", new_s))
     if new_s in [None, "", "_", " "]:
         raise ValueError(f"{filename} cannot be converted to a valid file name")
     return new_s
 
 
 def open_yaml(filepath: str):
+    """Open yaml file"""
     with open(filepath, "r") as data:
         content = yaml.safe_load(data)
     return content
+
+
+def save_yaml(data, filepath: str):
+    """Dump yaml file"""
+    with open(filepath, "w") as f:
+        yaml.dump(data, f)
 
 
 def open_file(filepath: str, sep: str = ";"):
@@ -88,50 +96,7 @@ def open_files(dirpath: str, files_list: list) -> dict:
 
 
 def save_file(filepath: str, data, overwrite: bool = False):
-    """
-    Save file in directory given by path
-    If the file could not be saved, it will tell you
-
-    Parameters
-    ----------
-    filepath: str
-        Path where to save the file
-    data:
-        Python object to save
-    overwrite: bool
-        Whether to overwrite already existing file with save name in same directory
-    """
-    filepath = Path(filepath)
-    dirpath = filepath.parent
-    create_dir_if_missing(dirpath)
-    filename = filepath.stem
-    extension = filepath.suffix
-
-    if overwrite:
-        if os.path.exists(filepath):
-            os.remove(filepath)
-    else:
-        i = 0
-        temp_name = ".".join([filename + f"_{i}", extension])
-        while os.path.exists(dirpath / temp_name):
-            i += 1
-            temp_name = ".".join([filename + f"_{i}", extension])
-        filename += "_{:d}".format(i) * (i > 0)
-        filename = ".".join([filename, extension])
-        filepath = dirpath / filename
-
-    if extension == "csv":
-        data.to_csv(
-            filepath,
-            index=False,
-            sep=";",
-            encoding="utf-8",
-        )
-    elif extension == "yaml":
-        with open(filepath, "w") as filename:
-            yaml.dump(data, filename)
-    else:
-        joblib.dump(data, filepath, compress=1)
+    raise NotImplementedError
 
 
 def save_files(dirpath: str, file_dict: dict, overwrite: bool = False):
@@ -151,6 +116,7 @@ def save_files(dirpath: str, file_dict: dict, overwrite: bool = False):
     for filename, file_data in file_dict.items():
         try:
             save_file(filepath=dirpath / filename, data=file_data, overwrite=overwrite)
+        # pylint: disable=broad-except
         except Exception as exception:
             files_not_saved.append(filename + ": " + str(exception))
     nb_success = len(file_dict.keys()) - len(files_not_saved)
