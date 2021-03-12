@@ -110,13 +110,13 @@ class MockAPIResponse:
                 "Results": {},
             }
             return response
-        response = load_test_data("tests/data_retrieval/expected_usbls_mock_api_response.yaml")
+        response = load_test_data("tests/samples/expected_usbls_mock_api_response.yaml")
         return response
 
     @staticmethod
     def oecd_api_response():
         """oecd api mock response for post request"""
-        response = load_test_data("tests/data_retrieval/expected_oecd_mock_api_response.yaml")
+        response = load_test_data("tests/samples/expected_oecd_mock_api_response.yaml")
         return response
 
 
@@ -130,24 +130,24 @@ def load_test_data(filepath):
 def pytest_generate_tests(metafunc):
     """Generates test parametrization for files for some tests"""
     if "test_data_give_name_to_series" in metafunc.fixturenames:
-        test_data = load_test_data("tests/data_retrieval/test_data_give_name_to_series.yaml")
+        test_data = load_test_data("tests/samples/test_data_give_name_to_series.yaml")
         test_data_list = zip(*test_data)
         metafunc.parametrize("test_data_give_name_to_series", test_data_list)
 
 
 @pytest.fixture
 def expected_result_get_fred_data():
-    data = tuple(load_test_data("tests/data_retrieval/expected_result_get_fred_data.yaml"))
+    data = tuple(load_test_data("tests/samples/expected_result_get_fred_data.yaml"))
     return data
 
 
 @pytest.fixture
 def test_data_clean_fred_series():
-    data = tuple(load_test_data("tests/data_retrieval/test_data_clean_fred_series.yaml"))
+    data = tuple(load_test_data("tests/samples/test_data_clean_fred_series.yaml"))
     return data
 
 
 @pytest.fixture
 def expected_result_get_usbls_data():
-    data = tuple(load_test_data("tests/data_retrieval/expected_result_get_usbls_data.yaml"))
+    data = tuple(load_test_data("tests/samples/expected_result_get_usbls_data.yaml"))
     return data
