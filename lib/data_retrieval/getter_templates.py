@@ -105,7 +105,7 @@ class TemplateGetter(MinimalGetter):
         else:  # no obs
             cleaned_series = pd.DataFrame(columns=["date", "value"])
         cleaned_series["date"] = pd.to_datetime(cleaned_series["date"], format=self.date_format)
-        cleaned_series.astype({"value": float})
+        cleaned_series = cleaned_series.astype({"value": float})
         return cleaned_series
 
     def clean_received_data(self, obs_data_list: list, metadata_list: list) -> pd.DataFrame:
