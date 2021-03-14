@@ -2,11 +2,10 @@ import datetime as dt
 
 import pandas as pd
 from loguru import logger
-import yaml
 
 from lib.data_retrieval.get_data import get_data_from_apis
 from lib.utils.files import open_file, create_dir_if_missing, save_yaml
-from config.config import API_KEYS_FILEPATH, API_REQUESTS_PARAMS_FILEPATH, API_ENDPOINTS
+from config.config import API_KEYS_FILEPATH, API_REQUESTS_PARAMS_FILEPATH
 
 
 def main():
@@ -27,9 +26,9 @@ def main():
     filepath = f"data/raw/{date}"
     create_dir_if_missing(filepath)
     data_path = filepath + "/raw_data.csv"
-    metadata_path = filepath + "/metadata.yml"
     data.to_csv(data_path, sep=";", index=False, encoding="utf-8")
     logger.info(f"Saved data to {data_path}.")
+    metadata_path = filepath + "/metadata.yaml"
     save_yaml(metadata, metadata_path)
     logger.info(f"Saved metadata to {metadata_path}.")
 

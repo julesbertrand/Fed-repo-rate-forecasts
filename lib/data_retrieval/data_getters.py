@@ -383,9 +383,7 @@ class OECDGetter(MinimalGetter):
         retrieved_dimensions = response.get("structure").get("dimensions").get("observation")
         retrieved_attributes = response.get("structure").get("attributes").get("observation")
 
-        obs_df = pd.DataFrame(
-            obs_list,
-        ).transpose()
+        obs_df = pd.DataFrame(obs_list).transpose()
         obs_df = self._assign_attributes(obs_df=obs_df, attributes=retrieved_attributes)
         obs_df = self._assign_dimensions(obs_df=obs_df, dimensions=retrieved_dimensions)
         obs_df["date"] = pd.PeriodIndex(obs_df["period"], freq="Q").to_timestamp()
