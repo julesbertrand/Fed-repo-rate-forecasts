@@ -73,7 +73,8 @@ def create_layout_and_plot(
         items to be passed to the subplot_function.
         Default is all columns in data except x_col.
     excl_items: list
-        if items is set to None (default), it will take all columns from data excpet x_col and excl_items.
+        if items is set to None (default), \
+it will take all columns from data except x_col and excl_items.
     subplot_kwargs: dict
         Kwargs to be passed to the subplot function.
     subplot_titles: Union[list, dict]
@@ -262,5 +263,5 @@ def get_subplots_titles(items, subplot_titles: Union[list, dict] = None) -> dict
             f"subplot_titles argument has wrong type {type(subplot_titles)}. \
 It must be one of 'None', dict, list."
         )
-    subplot_titles = {key: str(val).replace("_", " ") for key, val in subplot_titles.items()}
+    subplot_titles = {key: str(val).strip() for key, val in subplot_titles.items()}
     return subplot_titles

@@ -14,7 +14,7 @@ def visualize_features(
     fig_title: str = None,
     ncols: int = 3,
     height_per_ax: int = 2,
-    save_to: Union[str, bool] = False,
+    save_fig_filepath: str = None,
 ):
     """
     Given data and columns to plot, will show a pyplot graph with all columns plot
@@ -24,11 +24,12 @@ def visualize_features(
     x_col: str
         The column to use for a common x-axis to all subplots.
         Default is the DataFrame index.
-    items: list
-        items to be passed to the subplot_function.
+    columns: list
+        columns to be passed to the subplot_function.
         Default is all columns in data except x_col.
-    excl_items: list
-        if items is set to None (default), it will take all columns from data excpet x_col and excl_items.
+    excl_columns: list
+        if columns is set to None (default), \
+it will take all columns from data except x_col and excl_items.
     subplot_kwargs: dict
         Kwargs to be passed to the subplot function.
     subplot_titles: Union[list, dict]
@@ -39,8 +40,17 @@ def visualize_features(
         number of columns in the graph. Will be reduced to n_items if ncols > len(items).
     height_per_ax: int
         In grid points, height of each subplot.
-        This parameter is tricky and impacts the whole figure size.ne subplot in the pyplot grid object
-            subplot_title_suffix: str, list or dict of subplot titles to add to the columns name (e.g. units)
+        This parameter is tricky and impacts the whole figure size
+    save_fig_filepath: str
+        If None, do not save (default).
+        If str, path to where to save the figure.
+
+    Raises
+    ------
+    KeyError:
+        If x_col not in data.columns
+    TypeError:
+        If save_to is not str or bool
     """
     if columns is None:
         columns = data.columns
@@ -50,9 +60,14 @@ def visualize_features(
         fig_title = "Feature visualization"
     if x_col not in data.columns:
         raise KeyError(f"Specified x-axis column '{x_col}' not found in data")
+    if not isinstance(save_fig_filepath, (str, type(None))):
+        raise TypeError(f"save_to must be None str or None. Current value: {save_fig_filepath}")
 
     @visualization_grid(pass_ax_or_grid="ax")
-    def visualize_features_subplot(ax, col_name, text_fontsize, data, date_col: str = None):
+    # pylint: disable=unused-argument, invalid-name
+    def visualize_features_subplot(
+            ax, col_name: str, text_fontsize: int, data: pd.DataFrame, date_col: str = None
+    ):
         """This is the subplot function"""
         if date_col is None:
             ax.plot(data[col_name])
@@ -71,3 +86,14 @@ def visualize_features(
         ncols=ncols,
         height_per_ax=height_per_ax,
     )
+
+    if save_fig_filepath is not None:
+        fig.save_fig(save_fig_filepath)
+
+
+def visualize_seasonality(*args, **kwargs):
+    raise NotImplementedError
+
+
+def visualize_stationarity(*args, **kwargs):
+    raise NotImplementedError
