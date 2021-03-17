@@ -34,9 +34,10 @@
       date: '1980-01-01'
       value: '13.82'
 - - provider: FRED
-    name: Mock series name
+    name: Mock series name, lin
     series_id: FEDFUNDS
     frequency: m
+    lin_or_pch: lin
     units: "%"
     aggregation_method:
     seasonal_adjustment: nsa
@@ -48,9 +49,10 @@
       realtime_end: '2021-02-15'
       notes: mock notes
   - provider: FRED
-    name: Mock series name
+    name: Mock series name, lin
     series_id: DFF
     frequency: m
+    lin_or_pch: lin
     units: "%"
     aggregation_method: eop
     seasonal_adjustment: nsa

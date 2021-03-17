@@ -10,6 +10,7 @@
     name: CPI for All Urban Consumers (CPI-U)
     series_id: CUUR0000SA0
     frequency:
+    lin_or_pch:
     units:
     aggregation_method:
     seasonal_adjustment: nsa
@@ -27,6 +28,7 @@
     name: Chained CPI for All Urban Consumers, U.S. city average (C-CPI-U)
     series_id: SUUR0000SA0
     frequency:
+    lin_or_pch:
     units:
     aggregation_method:
     seasonal_adjustment: nsa

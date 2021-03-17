@@ -45,7 +45,7 @@ def test_fredgetter_clean_fred_series(test_data_clean_fred_series):
     assert test_obs_df.equals(expected_result)
 
 
-def test_get_usbls_data(expected_result_get_usbls_data):
+def test_usblsgetter_get_multiple_series(expected_result_get_usbls_data):
     getter = USBLSGetter(api_key="mock_api_key")
     start_date = dt.date(1995, 1, 1)
     end_date = dt.date(1995, 1, 1)
@@ -58,7 +58,7 @@ def test_get_usbls_data(expected_result_get_usbls_data):
 
 
 @pytest.mark.parametrize("series_params, error", [(None, TypeError), ([], ValueError)])
-def test_get_usbls_data_exception_raised(series_params, error):
+def test_usblsgetter_get_multiple_series_exception_raised(series_params, error):
     with pytest.raises(error):
         getter = USBLSGetter(api_key="mock_api_key")
         getter.get_multiple_series(
