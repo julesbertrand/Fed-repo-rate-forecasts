@@ -8,6 +8,17 @@ from lib.utils.df_utils import merge_df_list_on
 
 
 class MinimalGetter:
+    """Includes minimal functions to get data from an API
+
+    Methods
+    -------
+    _check_response_status_code:
+        check if an error occured or a warning was raised (http code != 200)
+    get_data:
+        Not implemented
+    _fetch_data:
+        Not implemented, supposed to send a get / post request to the api
+    """
     def __init__(self):
         pass
 
@@ -31,6 +42,33 @@ class MinimalGetter:
 
 
 class TemplateGetter(MinimalGetter):
+    """Template getter includint more function than the minimal getter
+
+    Methods
+    -------
+    _parse_date:
+        To get datetime object from self.date_format
+    get_data:
+        Takes series_params, start date, end date as parameters, \
+normalize requests and format api responses in dataframes and metadata. \
+Calls get_multiple_series and clean_received_data.
+    get_multiple_series:
+        Not implemented, get data and metadata from multiple series \
+with series params given as a list.
+    get_series:
+        Not implemented, get one series. Calls get_multiple_series.
+    _get_series_metadata:
+        Not implemented, get or format series metadata into a normalized format.
+    _series_cleaner:
+        Not implemented, get from api data to pd.Series \
+with columns 'date' and 'value' for one series.
+    clean_series:
+        Calls _series_cleaner for all series.
+    clean_received_data:
+        Calls clean_series, gives name to series.
+    _give_name_to_series:
+        Give a name to series based on series_id and metadata to be as comprehensive as as it can.
+    """
     def __init__(self, api_key, api_endpoint, date_format):
         self.api_key = api_key
         self.url = api_endpoint
@@ -50,7 +88,7 @@ class TemplateGetter(MinimalGetter):
         Parameters
         ----------
         series_params: list
-            List of ids US BLS series e.g.
+            List of ids of series and params to be passed to the Getter API e.g. frequency
         start_date: datetime.date
             The start of the observation period.
         end_date: datetime.date
@@ -129,6 +167,7 @@ class TemplateGetter(MinimalGetter):
             Aggregated data with names, in the right format
         """
         cleaned_data_list = []
+        # series_names = {}
         for i, obs_data in enumerate(obs_data_list):
             if metadata_list[i].get("series_id") is None:
                 raise KeyError("No 'series_id' in info_data: this key is mandatory.")
@@ -136,6 +175,7 @@ class TemplateGetter(MinimalGetter):
             series_name = self._give_name_to_series(metadata_list[i])
             cleaned_series.rename(columns={"value": series_name}, inplace=True)
             cleaned_data_list.append(cleaned_series)
+            # series_names[series_id_long] = series_name
 
         merged_data = merge_df_list_on(cleaned_data_list, on="date")
         return merged_data
@@ -147,13 +187,14 @@ class TemplateGetter(MinimalGetter):
         if "series_id" not in series_info.keys():
             raise KeyError("No 'series_id' in info_data: this key is mandatory.")
         fields_list = [
-            "series_id",
             "frequency",
             "aggregation_method",
             "seasonal_adjustment",
+            "lin_or_pch",
         ]
         for field in fields_list:
             if series_info.get(field):
                 name_components.append(series_info[field])
-        series_name = "_".join(name_components).replace(" ", "_")
-        return series_name
+        series_id_long = "_".join([series_info["series_id"]] + name_components).replace(" ", "-")
+        # series_name = ", ".join([series_info["name"]] + name_components)
+        return series_id_long

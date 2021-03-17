@@ -17,6 +17,9 @@ from lib.utils.df_utils import merge_df_list_on
 
 
 class FREDGetter(TemplateGetter):
+    """This Getter can retrieve data from the FRED St Louis API
+    https://fred.stlouisfed.org/docs/api/fred/
+    """
     api_endpoint = API_ENDPOINTS["FRED"]
     metadata_url = api_endpoint + "/series?"
     obs_url = api_endpoint + "/series/observations?"
@@ -33,32 +36,43 @@ class FREDGetter(TemplateGetter):
 
     # pylint: disable=arguments-differ
     def _fetch_data(self, url: str, params: dict = None) -> dict:
+        """Send a get request to the API
+
+        Raises
+        ------
+        HTPPError
+
+        Returns
+        -------
+        dict
+        """
         response = requests.get(url=url, params=params)
         self._check_response_status_code(response)
         response_json = response.json()
         return response_json
 
     def get_multiple_series(
-        self, series_params: list, start_date: dt.date, end_date: dt.date = None
+        self, series_params: List[dict], start_date: dt.date, end_date: dt.date = None
     ) -> Tuple[list, list]:
-        """Get multiple series data and info from FRED api
-        and group in two lists (one info, one data)
+        """Get multiple series data and metadata from the API \
+and group in two lists (one data, one metadata)
 
         Parameters
         ----------
         series_params: list
-            List of ids US BLS series e.g.
+            List of dicts of parameters for the request, \
+e.g. {'frequency': 'm', 'series_id': 'FEDFUNDS', 'units': 'lin'}
         start_date: datetime.date
-            The start of the observation period. USBLS only sends data for whole years
+            The start of the observation period.
         end_date: datetime.date
-            The start of the observation period. USBLS only sends data for whole years
+            The start of the observation period.
 
         Returns
         -------
         obs_data_list: list
-            List of dictionaries with data reponse from FRED api in json format or dict
+            List of dict with data reponse from api
         metadata_list: list
-            List of dictionaries with metadata for every series retrieved
+            List of dict with metadata for every series retrieved
         """
         if not isinstance(series_params, list):
             raise TypeError("'series_params' must be a list.")
@@ -87,24 +101,58 @@ class FREDGetter(TemplateGetter):
 
     def get_series(
         self, series_params: dict, start_date: dt.date, end_date: dt.date = None
-    ) -> dict:
+    ) -> Tuple[dict, dict]:
+        """Get series data and metadata from the API for a single series
+
+        Parameters
+        ----------
+        series_params: dict
+            Dict of parameters for the request, \
+e.g. {'frequency': 'm', 'series_id': 'FEDFUNDS', 'units': 'lin'}
+        start_date: datetime.date
+            The start of the observation period.
+        end_date: datetime.date
+            The start of the observation period.
+
+        Returns
+        -------
+        dict
+            Dict with data reponse from the API
+        dict
+            Dict with metadata for the series retrieved
+        """
         if not isinstance(series_params, dict):
             raise TypeError("'series_params' must be a dict.")
-        obs_list = self.get_multiple_series(
+        obs_data_list, metadata_list = self.get_multiple_series(
             series_params=[series_params], start_date=start_date, end_date=end_date
         )
-        return obs_list[0]
+        return obs_data_list[0], metadata_list[0]
 
     # pylint: disable=arguments-differ
     def _get_series_metadata(self, params: dict) -> dict:
+        """Get series metadata from the API for a single series
+
+        Parameters
+        ----------
+        params: dict
+            Dict of parameters for the request, \
+e.g. {'frequency': 'm', 'series_id': 'FEDFUNDS', 'units': 'lin'}
+
+        Returns
+        -------
+        dict
+            Dict with metadata standardized. \
+non-standardized metadata in associated with the key 'other'.
+        """
         series_metadata = self._fetch_data(url=self.metadata_url, params=params)
         series_metadata = series_metadata["seriess"][0]
         info_dict = {
             "provider": "FRED",
-            "name": series_metadata.pop("title"),
+            "name": series_metadata.pop("title") + ", " + params.get("units"),
             "series_id": params["series_id"],
             "frequency": params.get("frequency"),
             "units": series_metadata.pop("units_short"),
+            "lin_or_pch": params.get("units"),
             "aggregation_method": params.get("aggregation_method"),
             "seasonal_adjustment": series_metadata.pop("seasonal_adjustment_short").lower(),
             "start_date": series_metadata.pop("observation_start"),
@@ -133,6 +181,9 @@ class FREDGetter(TemplateGetter):
 
 
 class USBLSGetter(TemplateGetter):
+    """This Getter can retrieve data from the US Bureau of Labor Statistics
+    https://www.bls.gov/developers/
+    """
     api_endpoint = API_ENDPOINTS["USBLS"]
     date_format = "%Y"
     max_results_per_request = 1000
@@ -170,7 +221,7 @@ class USBLSGetter(TemplateGetter):
 
     # pylint: disable=arguments-differ
     def _fetch_data(self, url, payload: dict, headers: dict) -> dict:
-        """Send a post request to USBLS API
+        """Send a post request to the API
 
         Raises
         ------
@@ -195,34 +246,52 @@ class USBLSGetter(TemplateGetter):
     def get_series(
         self, series_params: str, start_date: dt.date, end_date: dt.date = None
     ) -> dict:
+        """Get series data and metadata from the API for a single series
+
+        Parameters
+        ----------
+        series_params: str
+            series_id
+        start_date: datetime.date
+            The start of the observation period.
+        end_date: datetime.date
+            The start of the observation period.
+
+        Returns
+        -------
+        dict
+            Dict with data reponse from the API
+        dict
+            Dict with metadata for the series retrieved
+        """
         if not isinstance(series_params, str):
             raise TypeError("'series_params' must be a str.")
-        obs_list = self.get_multiple_series(
+        obs_data_list, metadata_list = self.get_multiple_series(
             series_params=[series_params], start_date=start_date, end_date=end_date
         )
-        return obs_list[0]
+        return obs_data_list[0], metadata_list[0]
 
     def get_multiple_series(
         self, series_params: list, start_date: dt.date, end_date: dt.date = None
     ) -> Tuple[list, list]:
-        """Get multiple series data and info from FRED api
-        and group in two lists (one info, one data)
+        """Get multiple series data and metadata from the API \
+and group in two lists (one data, one metadata)
 
         Parameters
         ----------
         series_params: list
-            List of ids US BLS series e.g.
+            List of dicts of parameters for the request
         start_date: datetime.date
-            The start of the observation period. USBLS only sends data for whole years
+            The start of the observation period.
         end_date: datetime.date
-            The start of the observation period. USBLS only sends data for whole years
+            The start of the observation period.
 
         Returns
         -------
-        info_list: list
-            List of dictionaries with metadata for every series retrieved
-        data_list: list
-            List of dictionaries with data reponse from FRED api in json format or dict
+        obs_data_list: list
+            List of dict with data reponse from api
+        metadata_list: list
+            List of dict with metadata for every series retrieved
         """
         if not isinstance(series_params, list):
             raise TypeError("'series_params' must be a list.")
@@ -255,11 +324,26 @@ class USBLSGetter(TemplateGetter):
     # pylint: disable=arguments-differ
     @staticmethod
     def _get_series_metadata(catalog: dict, series_id: str) -> dict:
+        """Normalize metata retrived from the api in a dict
+
+        Parameters
+        ----------
+        catalog: dict
+            Metadata from the api call
+        series_id: str
+
+        Returns
+        -------
+        dict
+            Dict with metadata standardized. \
+non-standardized metadata in associated with the key 'other'.
+        """
         info_dict = {
             "provider": "USBLS",
             "name": catalog.pop("survey_name"),
             "series_id": series_id,
             "frequency": None,
+            "lin_or_pch": None,
             "units": None,
             "aggregation_method": None,
             "seasonal_adjustment": re.sub(r"[^NSA]", r"", catalog.pop("seasonality")).lower(),
@@ -291,6 +375,9 @@ class USBLSGetter(TemplateGetter):
 
 
 class OECDGetter(MinimalGetter):
+    """This Getter can retrieve data from the OECD
+    https://data.oecd.org/api/sdmx-json-documentation/
+    """
     api_endpoint = API_ENDPOINTS["OECD"]
     date_format = "{:4d}-Q{:1d}"
     max_results_per_request = 1e6
@@ -308,6 +395,7 @@ class OECDGetter(MinimalGetter):
 
     @staticmethod
     def _datetime_to_oecd_date_format(date: dt.date) -> str:
+        """Convert dt.datetime to oecd date format YYYY-%QQ"""
         year, month = map(int, date.strftime("%Y-%m").split("-"))
         quarter = ceil(month / 3)
         new_date = f"{year}-Q{quarter}"
@@ -315,12 +403,23 @@ class OECDGetter(MinimalGetter):
 
     @staticmethod
     def _oecd_date_to_datetime_format(date: str) -> dt.date:
+        """Convert oecd date format YYYY-%QQ to dt.datetime"""
         year, quarter = int(date[:4]), int(date[-1])
         new_date = dt.date(year=year, month=quarter * 3)
         return new_date
 
     # pylint: disable=arguments-differ
     def _fetch_data(self, url: str, params: dict = None) -> Union[dict, list]:
+        """Send a get request to the API
+
+        Raises
+        ------
+        HTPPError
+
+        Returns
+        -------
+        dict or list
+        """
         response = requests.get(url=url, params=params)
         self._check_response_status_code(response)
         response_json = response.json()
@@ -351,6 +450,25 @@ class OECDGetter(MinimalGetter):
     def get_data_from_one_dataset(
         self, series_params: dict, start_date: dt.date, end_date: dt.date = None
     ) -> Tuple[pd.DataFrame, List[dict]]:
+        """Get multiple series data and metadata from the API from one dataset (OECD specificity) \
+and group in two lists (one data, one metadata)
+
+        Parameters
+        ----------
+        series_params: dict
+            Dict of parameters for the request including keys 'dataset_id' and 'dimensions'
+        start_date: datetime.date
+            The start of the observation period.
+        end_date: datetime.date
+            The start of the observation period.
+
+        Returns
+        -------
+        obs_data_list: list
+            List of dict with data reponse from api
+        metadata_list: list
+            List of dict with metadata for every series retrieved
+        """
         if not isinstance(series_params, dict):
             raise TypeError("'series_params' must be a dict.")
         if end_date is None:
@@ -469,6 +587,19 @@ class OECDGetter(MinimalGetter):
 
     @staticmethod
     def _get_metadata(series_info: dict) -> dict:
+        """Normalize metata retrived from the api in a dict
+
+        Parameters
+        ----------
+        series_info: dict
+            Metadata already retrieved from the api
+
+        Returns
+        -------
+        dict
+            Dict with metadata standardized. \
+non-standardized metadata in associated with the key 'other'.
+        """
         series_id = "_".join(
             [series_info.get("subject"), series_info.get("country"), series_info.get("measure")]
         )
@@ -482,6 +613,7 @@ class OECDGetter(MinimalGetter):
             "name": "To be implemented",
             "series_id": series_id,
             "frequency": series_info.get("frequency").lower(),
+            "lin_or_pch": None,
             "units": series_info.get("unit").lower(),
             "aggregation_method": None,
             "seasonal_adjustment": seasonal_adjustment,
