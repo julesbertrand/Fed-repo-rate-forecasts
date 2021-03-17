@@ -6,14 +6,17 @@ FRED:
     - frequency: m
       series_id: FEDFUNDS
       units: lin
+    - frequency: m
+      series_id: FEDFUNDS
+      units: pch
     - aggregation_method: eop
       frequency: m
       series_id: DFF
       units: lin
-    - aggregation_method: avg
+    - aggregation_method: eop
       frequency: m
       series_id: DFF
-      units: lin
+      units: pch
     - frequency: q
       series_id: GFDEBTN
       units: lin
@@ -49,12 +52,6 @@ FRED:
       units: lin
     - frequency: q
       series_id: W790RC1Q027SBEA
-      units: pch
-    - frequency: q
-      series_id: NNBGFNQ027S
-      units: lin
-    - frequency: q
-      series_id: NNBGFNQ027S
       units: pch
     - frequency: q
       series_id: NNBGFNQ027S
@@ -70,15 +67,20 @@ FRED:
       units: pch
     - frequency: m 
       series_id: WTISPLC
-      units: lin 
+      units: lin
+    - frequency: m 
+      series_id: WTISPLC
+      units: pch
+    - aggregation_method: avg
+      frequency: m
+      series_id: VIXCLS
+      units: lin
     - frequency: m 
       series_id: DPCERAM1M225NBEA
       units: lin 
     - frequency: m 
       series_id: USREC
       units: lin 
-    
-    
 
 USBLS:
   series_params:
