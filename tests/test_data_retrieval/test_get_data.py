@@ -1,5 +1,9 @@
+import pytest
+import shutil
+
 from lib.data_retrieval.get_data import get_data_from_apis
 from lib.utils.files import open_file
+from lib.utils.errors import InvalidAPIKey, InvalidAPIRequestsParams
 from config.config import API_REQUESTS_PARAMS_FILEPATH
 
 API_MOCK_KEYS = {"FRED": "mock_key", "USBLS": "mock_key", "OECD": "mock_key"}
@@ -16,7 +20,10 @@ def test_get_data_fred():
         api_params=api_params,
         data_start_date=data_start_date,
         providers=["FRED"],
+        save_dirpath="./unittests_temp/"
     )
+    shutil.rmtree("./unittests_temp/")
+    
 
 
 def test_get_data_usbls():
@@ -55,3 +62,29 @@ def test_get_data_oecd():
         data_start_date=data_start_date,
         providers=["OECD"],
     )
+
+
+@pytest.mark.parametrize("api_keys", [{}, {"Mock_provider": "mock_key"}])
+def test_get_data_key_error(api_keys):
+    with pytest.raises(InvalidAPIKey):
+        api_params = open_file(API_REQUESTS_PARAMS_FILEPATH)
+        data_start_date = api_params.pop("data_start_date")
+        api_params["FRED"]["series_params"] = api_params.get("FRED").get("series_params")[:2]
+        _ = get_data_from_apis(
+            api_keys=api_keys,
+            api_params=api_params,
+            data_start_date=data_start_date,
+            providers=["FRED"],
+        )
+
+
+@pytest.mark.parametrize("api_params", [{}, {"Mock_provider": {"mock_params": "mock_value"}}])
+def test_get_data_params_error(api_params):
+    with pytest.raises(InvalidAPIRequestsParams):
+        api_keys = API_MOCK_KEYS
+        _ = get_data_from_apis(
+            api_keys=api_keys,
+            api_params=api_params,
+            data_start_date="2010-08-01",
+            providers=["FRED"],
+        )

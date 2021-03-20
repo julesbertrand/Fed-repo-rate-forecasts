@@ -3,7 +3,7 @@ import pytest
 import pandas as pd
 
 from lib.data_retrieval.data_getters import FREDGetter, USBLSGetter, OECDGetter
-
+# TODO: test on data cleaning methods for USBLS and FRED getters
 
 @pytest.mark.parametrize("getter", [FREDGetter, USBLSGetter, OECDGetter])
 def test_getter_init(getter):

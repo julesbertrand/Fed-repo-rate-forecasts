@@ -2,6 +2,7 @@ from functools import reduce
 import datetime as dt
 
 import pandas as pd
+from loguru import logger
 
 from lib.data_retrieval.data_getters import FREDGetter, USBLSGetter, OECDGetter
 from lib.utils.df_utils import merge_df_list_on
@@ -50,4 +51,15 @@ def get_data_from_apis(
 
     merged_metadata = reduce(lambda left, right: left + right, metadata_list)
     merged_data = merge_df_list_on(obs_df_list, on="date")
+
+    if save_dirpath is not None:
+        date = dt.date.today().strftime("%Y%m%d")
+        dirpath = get_projet_root() / save_dirpath / date
+        create_dir_if_missing(dirpath)
+        data_path = dirpath / "raw_data.csv"
+        data.to_csv(data_path, sep=";", index=False, encoding="utf-8")
+        metadata_path = dirpath / "metadata.yaml"
+        save_yaml(metadata, metadata_path)
+        logger.success(f"All data retrieved, cleaned and saved to {str(dirpath)}.")
+
     return merged_data, merged_metadata
