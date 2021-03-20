@@ -1,35 +1,11 @@
 from pathlib import Path
 import os
-import re
 import yaml
 import joblib
-from unidecode import unidecode
 
 import pandas as pd
 
-
-def get_projet_root() -> Path:
-    """Get project root directory path
-
-    Returns
-    -------
-    pathlib.Path
-    """
-    return Path(__file__).parent.parent.parent
-
-
-def create_dir_if_missing(filepath: str):
-    """Create directory if it does not exist already"""
-    if not os.path.exists(filepath):
-        os.makedirs(filepath)
-
-
-def list_files(dirpath: str, pattern: str = "*.csv") -> list:
-    """
-    List files in a directory
-    """
-    file_names = list(Path(dirpath).glob(pattern))
-    return file_names
+from lib.utils.path import normalize_string
 
 
 def get_valid_filename(filename: str) -> str:
@@ -41,11 +17,10 @@ def get_valid_filename(filename: str) -> str:
     - remove special characters
     eg. "The cat is blue in été" -> "the_cat_is_blue_in_ete
     """
-    new_s = str(filename).strip().replace(" ", "_").lower()
-    new_s = unidecode(re.sub(r"(?u)[^-\w.]", r"", new_s))
-    if new_s in [None, "", "_", " "]:
+    s = normalize_string(filename).replace(" ", "_")
+    if s in [None, "", "_", " "]:
         raise ValueError(f"{filename} cannot be converted to a valid file name")
-    return new_s
+    return s
 
 
 def open_yaml(filepath: str):
