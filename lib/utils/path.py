@@ -45,7 +45,7 @@ def normalize_string(s: str, **kwargs) -> str:
         if isinstance(kwargs.get("keep_char"), str):
             s = re.sub(kwargs.get("keep_char"), " ", s)
         else:
-            s = re.sub(r"(?u)[^-\+%\w. ]", "", s)
+            s = re.sub(r"(?u)[^-$\+%\w. ]", "", s)
     if kwargs.get("unicode") is not False:
         s = unidecode.unidecode(s)
     return s
