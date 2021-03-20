@@ -1,5 +1,5 @@
-import pytest
 import shutil
+import pytest
 
 from lib.data_retrieval.get_data import get_data_from_apis
 from lib.utils.files import open_file
@@ -23,7 +23,6 @@ def test_get_data_fred():
         save_dirpath="./unittests_temp/"
     )
     shutil.rmtree("./unittests_temp/")
-    
 
 
 def test_get_data_usbls():
