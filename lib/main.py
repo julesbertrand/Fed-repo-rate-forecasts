@@ -1,6 +1,6 @@
+from lib.config import API_KEYS_FILEPATH, API_REQUESTS_PARAMS_FILEPATH, GETTERS
 from lib.data_retrieval.get_data import get_data_from_apis
 from lib.utils.files import open_file
-from config.config import API_KEYS_FILEPATH, API_REQUESTS_PARAMS_FILEPATH
 
 
 def main():
@@ -14,7 +14,8 @@ def main():
         api_params=api_params,
         data_start_date=data_start_date,
         data_end_date=data_end_date,
-        providers=["FRED", "USBLS", "OECD"],
+        # providers=["USBLS"],
+        providers=GETTERS,
         save_dirpath="data/raw/",
     )
 

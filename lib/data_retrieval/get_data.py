@@ -1,16 +1,18 @@
-from functools import reduce
 import datetime as dt
+from functools import reduce
+from pathlib import Path
 
 import pandas as pd
 from loguru import logger
 
-from lib.data_retrieval.data_getters import FREDGetter, USBLSGetter, OECDGetter
+from lib.config import ROOT_PATH
+from lib.data_retrieval.data_getters import FREDGetter, OECDGetter, USBLSGetter
 from lib.utils.df_utils import merge_df_list_on
-from lib.utils.files import save_yaml
-from lib.utils.path import get_projet_root, create_dir_if_missing
 from lib.utils.errors import InvalidAPIKey, InvalidAPIRequestsParams
+from lib.utils.files import save_yaml
+from lib.utils.path import create_dir_if_missing
 
-GETTERS = {"FRED": FREDGetter, "USBLS": USBLSGetter, "OECD": OECDGetter}
+_GETTERS = {"FRED": FREDGetter, "USBLS": USBLSGetter, "OECD": OECDGetter}
 
 
 def get_data_from_apis(
@@ -25,9 +27,9 @@ def get_data_from_apis(
     Save related metadata in one yaml file
     """
     if providers is None:
-        getters = GETTERS
+        getters = _GETTERS
     else:
-        getters = {k: v for k, v in GETTERS.items() if k in providers}
+        getters = {k: v for k, v in _GETTERS.items() if k in providers}
 
     for provider in getters.keys():
         if provider not in api_keys.keys():
@@ -54,12 +56,12 @@ def get_data_from_apis(
 
     if save_dirpath is not None:
         date = dt.date.today().strftime("%Y%m%d")
-        dirpath = get_projet_root() / save_dirpath / date
+        dirpath = Path(ROOT_PATH) / save_dirpath / date
         create_dir_if_missing(dirpath)
         data_path = dirpath / "raw_data.csv"
         data.to_csv(data_path, sep=";", index=False, encoding="utf-8")
         metadata_path = dirpath / "metadata.yaml"
         save_yaml(metadata, metadata_path)
-        logger.success(f"All data retrieved, cleaned and saved to {str(dirpath)}.")
+        logger.success(f"All data retrieved, cleaned and saved to {dirpath}.")
 
     return merged_data, merged_metadata

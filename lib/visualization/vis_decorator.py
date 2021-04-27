@@ -1,9 +1,9 @@
-from typing import Union, Callable
-from math import ceil
 from functools import partial
+from math import ceil
+from typing import Callable, Union
 
-import pandas as pd
 import matplotlib.pyplot as plt
+import pandas as pd
 from loguru import logger
 
 MAIN_TITLE_FONTSIZE = 18
@@ -29,7 +29,10 @@ the vertical delimitations of the figure and horiz it's horizontal position.
     Decorator function that returns a matplotlib.pyplot figure
     """
     if pass_ax_or_grid not in ["ax", "grid"]:
-        raise ValueError("Argument pass_ax_or_grid must be 'ax' or 'grid'.")
+        raise ValueError(
+            f"Argument 'pass_ax_or_grid' invalid value: {pass_ax_or_grid}. \
+Must be one of 'ax' and 'grid'."
+        )
 
     def wrapper(subplot_function):
         partial_layout = partial(
@@ -118,10 +121,10 @@ it will take all columns from data except x_col and excl_items.
         title_height = 0
 
     # x axis min and max
-    if x_col is None:  # without dates
+    if x_col is None:  # without dates or x_col
         min_x = data.index[0]
         max_x = data.index[-1]
-    else:  # with dates
+    else:  # with dates / x_col
         min_x = data[x_col].iloc[0]
         max_x = data[x_col].iloc[-1]
 
@@ -133,33 +136,17 @@ it will take all columns from data except x_col and excl_items.
         bottom = idx_row * (height_per_ax + 1) + height_per_ax + title_height - 1
         horiz = idx_col
         grid_pos = (fig, grid, top, bottom, horiz)
-        if pass_ax_or_grid == "grid":
-            subplot_with_grid(
-                item,
-                subplot_function,
-                subplot_kwargs,
-                subplot_titles[item],
-                grid_pos,
-                min_x=min_x,
-                max_x=max_x,
-                text_fontsize=text_fontsize,
-            )
-        elif pass_ax_or_grid == "ax":
-            subplot_with_ax(
-                item,
-                subplot_function,
-                subplot_kwargs,
-                subplot_titles[item],
-                grid_pos,
-                min_x=min_x,
-                max_x=max_x,
-                text_fontsize=text_fontsize,
-            )
-        else:
-            raise ValueError(
-                f"Argument 'pass_ax_or_grid' invalid value: {pass_ax_or_grid}. \
-    Must be one of 'ax' and 'grid'"
-            )
+        subplot_on_grid(
+            item,
+            subplot_function,
+            subplot_kwargs,
+            subplot_titles[item],
+            grid_pos,
+            pass_ax_or_grid,
+            min_x=min_x,
+            max_x=max_x,
+            text_fontsize=text_fontsize,
+        )
 
     fig.tight_layout()
     return fig
@@ -174,12 +161,13 @@ def create_grid(ncols: int, nrows: int, height_per_ax: int = 3):
     return fig, grid
 
 
-def subplot_with_grid(
+def subplot_on_grid(
     item,
     subplot_function: Callable,
     subplot_kwargs: dict,
     subplot_title: str,
     grid_pos: tuple,
+    pass_ax_or_grid: str,
     min_x,
     max_x,
     text_fontsize: int,
@@ -187,40 +175,31 @@ def subplot_with_grid(
     """plot on subplot using the grid and create custom axes.
     Can create multiple subplots in subplot function on the specified grid area
     """
-    fig = grid_pos[0]
-    ax_pos = len(fig.axes)
-    subplot_function(grid_pos, item, text_fontsize=text_fontsize, **subplot_kwargs)
-    for axe in fig.axes[ax_pos:]:
-        # set x lim and ticks for all subplots created by the subplot function
+    if pass_ax_or_grid == "grid":
+        fig = grid_pos[0]
+        ax_pos = len(fig.axes)
+        subplot_function(grid_pos, item, text_fontsize=text_fontsize, **subplot_kwargs)
+        for axe in fig.axes[ax_pos:]:
+            # set x lim and ticks for all subplots created by the subplot function
+            axe.set_xlim(left=min_x, right=max_x)
+            axe.tick_params(labelsize=text_fontsize + LABEL_SIZE_CORR)
+        if not fig.axes[ax_pos].get_title():
+            # Set title for first axe created in given grid_pos if none has been given
+            fig.axes[ax_pos].set_title(subplot_title, fontsize=text_fontsize + SUBPLOT_TITLE_CORR)
+    elif pass_ax_or_grid == "ax":
+        fig, grid, top, bottom, horiz = grid_pos
+        axe = fig.add_subplot(grid[top : bottom + 1, horiz])
+        subplot_function(axe, item, text_fontsize=text_fontsize, **subplot_kwargs)
         axe.set_xlim(left=min_x, right=max_x)
-        axe.tick_params(labelsize=text_fontsize + LABEL_SIZE_CORR)
-    if not fig.axes[ax_pos].get_title():
-        # Set title for first axe created in given grid_pos if none has been given
-        fig.axes[ax_pos].set_title(
-            subplot_title,
-            fontsize=text_fontsize + SUBPLOT_TITLE_CORR,
+        axe.tick_params(labelsize=text_fontsize - LABEL_SIZE_CORR)
+        if not axe.get_title():
+            # Set title for axe if none exists
+            axe.set_title(subplot_title, fontsize=text_fontsize + SUBPLOT_TITLE_CORR)
+    else:
+        raise ValueError(
+            f"Argument 'pass_ax_or_grid' invalid value: {pass_ax_or_grid}. \
+Must be one of 'ax' and 'grid'."
         )
-
-
-def subplot_with_ax(
-    item,
-    subplot_function: Callable,
-    subplot_kwargs: dict,
-    subplot_title: str,
-    grid_pos: tuple,
-    min_x,
-    max_x,
-    text_fontsize: int,
-):
-    """plot using pre-defined subplot axes"""
-    fig, grid, top, bottom, horiz = grid_pos
-    axe = fig.add_subplot(grid[top : bottom + 1, horiz])
-    subplot_function(axe, item, text_fontsize=text_fontsize, **subplot_kwargs)
-    axe.set_xlim(left=min_x, right=max_x)
-    axe.tick_params(labelsize=text_fontsize - LABEL_SIZE_CORR)
-    # Set title for axe if none exists
-    if not axe.get_title():
-        axe.set_title(subplot_title, fontsize=text_fontsize + SUBPLOT_TITLE_CORR)
 
 
 def add_plot_main_title(fig, grid, fig_title: str = None, title_height: int = 2):
@@ -236,24 +215,20 @@ def add_plot_main_title(fig, grid, fig_title: str = None, title_height: int = 2)
     )
     # remove ticks and axes for title box
     ax_title.tick_params(
-        axis="both",
-        which="both",
-        left=False,
-        labelleft=False,
-        bottom=False,
-        labelbottom=False,
+        axis="both", which="both", left=False, labelleft=False, bottom=False, labelbottom=False
     )
 
 
 def get_subplots_titles(items, subplot_titles: Union[list, dict] = None) -> dict:
     """Standardize subplots titles in a dict"""
+    # BUG: when passing a list, wrong subplotstitles
     if isinstance(subplot_titles, dict):
         pass
     elif subplot_titles is None:
         try:
             subplot_titles = {item: str(item.__name__) for item in items}
         except AttributeError:
-            logger.warning("No subplot titles found: used items or columns names instead")
+            logger.warning("No subplot titles found: using items or columns names instead")
             subplot_titles = {item: str(item) for item in items}
     elif isinstance(subplot_titles, list):
         titles = [f"{items[i]}, {subplot_titles[i]}" for i in range(len(items))]
@@ -263,5 +238,6 @@ def get_subplots_titles(items, subplot_titles: Union[list, dict] = None) -> dict
             f"subplot_titles argument has wrong type {type(subplot_titles)}. \
 It must be one of 'None', dict, list."
         )
+    # TODO: normalize strong to get valid column name ?
     subplot_titles = {key: str(val).strip() for key, val in subplot_titles.items()}
     return subplot_titles

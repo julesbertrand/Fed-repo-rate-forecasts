@@ -1,18 +1,18 @@
-from collections import defaultdict
 import datetime as dt
-from typing import Tuple, Union, List
-from math import ceil
-import re
 import json
+import re
+from collections import defaultdict
 from copy import deepcopy
-from loguru import logger
-import requests
+from math import ceil
+from typing import List, Tuple, Union
 
 import numpy as np
 import pandas as pd
+import requests
+from loguru import logger
 
-from config.config import API_ENDPOINTS
-from lib.data_retrieval.getter_templates import TemplateGetter, MinimalGetter
+from lib.config import API_ENDPOINTS
+from lib.data_retrieval.getter_templates import MinimalGetter, TemplateGetter
 from lib.utils.df_utils import merge_df_list_on
 
 
@@ -317,6 +317,7 @@ and group in two lists (one data, one metadata)
         for i, series_id in enumerate(series_params):
             catalog = data[i]["catalog"]
             info_dict = self._get_series_metadata(catalog, series_id)
+            # TODO: info_dict["start_date"] =
             metadata_list.append(info_dict)
 
         return obs_data_list, metadata_list
@@ -348,7 +349,7 @@ non-standardized metadata in associated with the key 'other'.
             "aggregation_method": None,
             "seasonal_adjustment": re.sub(r"[^NSA]", r"", catalog.pop("seasonality")).lower(),
             "start_date": "To be Implemented",
-            "end_date_date": "To be Implemented",
+            "end_date": "To be Implemented",
             "other": catalog,
         }
         return info_dict
@@ -618,7 +619,7 @@ non-standardized metadata in associated with the key 'other'.
             "aggregation_method": None,
             "seasonal_adjustment": seasonal_adjustment,
             "start_date": "To be Implemented",
-            "end_date_date": "To be Implemented",
+            "end_date": "To be Implemented",
             "other": series_info,
         }
         return info_dict

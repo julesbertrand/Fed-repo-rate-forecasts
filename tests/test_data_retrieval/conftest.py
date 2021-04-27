@@ -1,7 +1,8 @@
 import json
-import yaml
+
 import pytest
 import requests
+import yaml
 
 from config.config import API_ENDPOINTS
 

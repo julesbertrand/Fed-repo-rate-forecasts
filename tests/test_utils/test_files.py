@@ -2,7 +2,7 @@ import shutil
 
 import pytest
 
-from lib.utils.files import get_valid_filename, save_yaml, open_yaml
+from lib.utils.files import get_valid_filename, open_yaml, save_yaml
 from lib.utils.path import create_dir_if_missing
 
 

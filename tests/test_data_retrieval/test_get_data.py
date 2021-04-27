@@ -1,10 +1,11 @@
 import shutil
+
 import pytest
 
-from lib.data_retrieval.get_data import get_data_from_apis
-from lib.utils.files import open_file
-from lib.utils.errors import InvalidAPIKey, InvalidAPIRequestsParams
 from config.config import API_REQUESTS_PARAMS_FILEPATH
+from lib.data_retrieval.get_data import get_data_from_apis
+from lib.utils.errors import InvalidAPIKey, InvalidAPIRequestsParams
+from lib.utils.files import open_file
 
 API_MOCK_KEYS = {"FRED": "mock_key", "USBLS": "mock_key", "OECD": "mock_key"}
 

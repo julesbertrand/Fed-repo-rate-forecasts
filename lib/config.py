@@ -1,4 +1,11 @@
-# Data retrieval
+from lib.utils.path import get_projet_root
+
+
+### Path ###
+ROOT_PATH = get_projet_root()
+
+
+### Data Getters ###
 API_KEYS_FILEPATH = "./secrets/api_keys.yaml"
 API_ENDPOINTS = {
     "FRED_OBS": "https://api.stlouisfed.org/fred/series/observations?",
@@ -8,3 +15,7 @@ API_ENDPOINTS = {
     "OECD": "http://stats.oecd.org/SDMX-JSON/data/",
 }
 API_REQUESTS_PARAMS_FILEPATH = "./config/config_api.yaml"
+
+
+### Get data ###
+GETTERS = ["FRED", "USBLS", "OECD"]
