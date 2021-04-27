@@ -4,7 +4,7 @@ import pytest
 import requests
 import yaml
 
-from config.config import API_ENDPOINTS
+from lib.config import API_ENDPOINTS
 
 
 @pytest.fixture(autouse=True)

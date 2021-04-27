@@ -2,7 +2,7 @@ import shutil
 
 import pytest
 
-from config.config import API_REQUESTS_PARAMS_FILEPATH
+from lib.config import API_REQUESTS_PARAMS_FILEPATH
 from lib.data_retrieval.get_data import get_data_from_apis
 from lib.utils.errors import InvalidAPIKey, InvalidAPIRequestsParams
 from lib.utils.files import open_file

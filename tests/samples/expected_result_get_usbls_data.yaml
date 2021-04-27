@@ -15,7 +15,7 @@
     aggregation_method:
     seasonal_adjustment: nsa
     start_date: To be Implemented
-    end_date_date: To be Implemented
+    end_date: To be Implemented
     other:
       series_title: All items in U.S. city average, all urban consumers, not seasonally
         adjusted
@@ -33,7 +33,7 @@
     aggregation_method:
     seasonal_adjustment: nsa
     start_date: To be Implemented
-    end_date_date: To be Implemented
+    end_date: To be Implemented
     other:
       series_title: All items in U.S. city average, all urban consumers, chained,
         not seasonally adjusted

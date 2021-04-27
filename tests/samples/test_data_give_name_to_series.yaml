@@ -38,7 +38,7 @@
     start_date: '1954-07-01'
     units: "%"
   - aggregation_method:
-    end_date_date: To be Implemented
+    end_date: To be Implemented
     frequency:
     name: CPI for All Urban Consumers (CPI-U)
     other:
@@ -56,7 +56,7 @@
     start_date: To be Implemented
     units:
   - aggregation_method:
-    end_date_date: To be Implemented
+    end_date: To be Implemented
     frequency:
     name: CPI for All Urban Consumers (CPI-U)
     other:

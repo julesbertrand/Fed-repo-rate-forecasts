@@ -53,7 +53,6 @@ def test_usblsgetter_get_multiple_series(expected_result_get_usbls_data):
     test_result = getter.get_multiple_series(
         series_params=series_ids, start_date=start_date, end_date=end_date
     )
-    print(test_result)
     assert test_result == expected_result_get_usbls_data
 
 
