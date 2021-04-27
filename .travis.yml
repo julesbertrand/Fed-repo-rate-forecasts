@@ -15,9 +15,8 @@ before_script:
 
 script:
   # - pylint --exit-zero config lib tests
-  # - pylint --disable=C config lib tests
+  # - pylint config lib tests
   - pytest -v -rs --cov=lib tests
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
-    

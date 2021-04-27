@@ -18,18 +18,7 @@ def test_merge_df_on_list():
             "Date": list(range(1, 11)),
             "Value_1": ["a", "b", "c", "d", "e", np.nan, "g", np.nan, np.nan, "j"],
             "Value_2": ["a", "b", "c", "d", "e", "f", np.nan, "h", np.nan, np.nan],
-            "Value_3": [
-                "a",
-                np.nan,
-                "c",
-                "d",
-                "e",
-                np.nan,
-                np.nan,
-                np.nan,
-                "i",
-                np.nan,
-            ],
+            "Value_3": ["a", np.nan, "c", "d", "e", np.nan, np.nan, np.nan, "i", np.nan],
         }
     )
     print(merge_df_list_on([df_1, df_2, df_3], on="Date"))
@@ -44,11 +33,12 @@ def test_merge_df_on_list():
         (pd.DataFrame(columns=["foo"]), ["foo", "bar"], None, ["foo"]),
         (pd.DataFrame(columns=["foo"]), None, None, ["foo"]),
         (pd.DataFrame(columns=["foo", "bar"]), ["foo", "bar"], ["foo"], ["bar"]),
-    ]
+    ],
 )
 def test_check_columns(data, columns, excl_columns, expected):
     res = check_columns(data, columns, excl_columns)
     assert res == expected
+
 
 @pytest.mark.parametrize(
     "data, columns, excl_columns",
@@ -58,7 +48,7 @@ def test_check_columns(data, columns, excl_columns, expected):
         (pd.DataFrame(columns=[]), ["foo", "bar"], [], ValueError),
         (pd.DataFrame(columns=["foo"]), ["foo", "bar"], ["foo"], ValueError),
         (pd.DataFrame(columns=["foo", "bar"]), ["foo"], ["foo"], ValueError),
-    ]
+    ],
 )
 def check_columns_errors(data, columns, excl_columns, error):
     with pytest.raises(error):

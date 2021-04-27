@@ -19,6 +19,7 @@ class MinimalGetter:
     _fetch_data:
         Not implemented, supposed to send a get / post request to the api
     """
+
     def __init__(self):
         pass
 
@@ -69,6 +70,7 @@ with columns 'date' and 'value' for one series.
     _give_name_to_series:
         Give a name to series based on series_id and metadata to be as comprehensive as as it can.
     """
+
     def __init__(self, api_key, api_endpoint, date_format):
         self.api_key = api_key
         self.url = api_endpoint
@@ -186,12 +188,7 @@ with columns 'date' and 'value' for one series.
         name_components = []
         if "series_id" not in series_info.keys():
             raise KeyError("No 'series_id' in info_data: this key is mandatory.")
-        fields_list = [
-            "frequency",
-            "aggregation_method",
-            "seasonal_adjustment",
-            "lin_or_pch",
-        ]
+        fields_list = ["frequency", "aggregation_method", "seasonal_adjustment", "lin_or_pch"]
         for field in fields_list:
             if series_info.get(field):
                 name_components.append(series_info[field])

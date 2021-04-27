@@ -22,26 +22,19 @@ def test_get_valid_filename(filename, expected_result):
     assert get_valid_filename(filename) == expected_result
 
 
-@pytest.mark.parametrize(
-    "filename",
-    [
-        "",
-        " ",
-        "_",
-        "  _",
-    ],
-)
+@pytest.mark.parametrize("filename", ["", " ", "_", "  _"])
 def test_get_valid_filename_errors(filename):
     with pytest.raises(ValueError):
         get_valid_filename(filename)
+
 
 @pytest.mark.parametrize(
     "data",
     [
         ["provider", "getter", "api_key"],
         list(range(10)),
-        {"10": list(range(10)), "6": list(range(6))}
-    ]
+        {"10": list(range(10)), "6": list(range(6))},
+    ],
 )
 def test_save_and_open_yaml(data):
     dirpath = "./unittests_temp/"

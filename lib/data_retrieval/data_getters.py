@@ -20,6 +20,7 @@ class FREDGetter(TemplateGetter):
     """This Getter can retrieve data from the FRED St Louis API
     https://fred.stlouisfed.org/docs/api/fred/
     """
+
     api_endpoint = API_ENDPOINTS["FRED"]
     metadata_url = api_endpoint + "/series?"
     obs_url = api_endpoint + "/series/observations?"
@@ -184,6 +185,7 @@ class USBLSGetter(TemplateGetter):
     """This Getter can retrieve data from the US Bureau of Labor Statistics
     https://www.bls.gov/developers/
     """
+
     api_endpoint = API_ENDPOINTS["USBLS"]
     date_format = "%Y"
     max_results_per_request = 1000
@@ -379,6 +381,7 @@ class OECDGetter(MinimalGetter):
     """This Getter can retrieve data from the OECD
     https://data.oecd.org/api/sdmx-json-documentation/
     """
+
     api_endpoint = API_ENDPOINTS["OECD"]
     date_format = "{:4d}-Q{:1d}"
     max_results_per_request = 1e6

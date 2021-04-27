@@ -1,0 +1,21 @@
+requests==2.25.1
+Unidecode==1.1.2
+numpy==1.20.1
+scipy==1.6.0
+pandas==1.2.1
+joblib==1.0.0
+matplotlib==3.3.4
+seaborn==0.11.0
+loguru==0.5.3
+statsmodels==0.11.1
+PyYAML==5.4.1
+
+# dev requirements
+pylint==2.6.0
+pytest==6.2.2
+pytest-cov==2.11.1
+black==19.10b0
+isort
+pipreqs==0.4.10
+pip-tools==6.1.0
+pre-commit==2.12.1

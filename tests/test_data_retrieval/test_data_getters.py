@@ -32,10 +32,7 @@ def test_fredgetter_get_multiple_series(expected_result_get_fred_data):
 def test_get_fred_data_exception_raised(series_params, error):
     with pytest.raises(error):
         getter = FREDGetter(api_key="mock_api_key")
-        getter.get_multiple_series(
-            series_params=series_params,
-            start_date=dt.date(2018, 1, 1),
-        )
+        getter.get_multiple_series(series_params=series_params, start_date=dt.date(2018, 1, 1))
 
 
 @pytest.mark.skip(reason="Not implemented yet")
@@ -64,7 +61,4 @@ def test_usblsgetter_get_multiple_series(expected_result_get_usbls_data):
 def test_usblsgetter_get_multiple_series_exception_raised(series_params, error):
     with pytest.raises(error):
         getter = USBLSGetter(api_key="mock_api_key")
-        getter.get_multiple_series(
-            series_params=series_params,
-            start_date=dt.date(2018, 1, 1),
-        )
+        getter.get_multiple_series(series_params=series_params, start_date=dt.date(2018, 1, 1))

@@ -1,6 +1,5 @@
 from lib.utils.path import get_projet_root
 
-
 ### Path ###
 ROOT_PATH = get_projet_root()
 

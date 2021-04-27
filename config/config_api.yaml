@@ -65,22 +65,22 @@ FRED:
     - frequency: q
       series_id: TCMDO
       units: pch
-    - frequency: m 
+    - frequency: m
       series_id: WTISPLC
       units: lin
-    - frequency: m 
+    - frequency: m
       series_id: WTISPLC
       units: pch
     - aggregation_method: avg
       frequency: m
       series_id: VIXCLS
       units: lin
-    - frequency: m 
+    - frequency: m
       series_id: DPCERAM1M225NBEA
-      units: lin 
-    - frequency: m 
+      units: lin
+    - frequency: m
       series_id: USREC
-      units: lin 
+      units: lin
 
 USBLS:
   series_params:
@@ -94,7 +94,7 @@ USBLS:
 OECD:
   series_params:
     - dataset_id: QNA
-      dimensions:
+    - dimensions:
         countries:
         - USA
         - OECD

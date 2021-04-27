@@ -21,7 +21,7 @@ def test_get_data_fred():
         api_params=api_params,
         data_start_date=data_start_date,
         providers=["FRED"],
-        save_dirpath="./unittests_temp/"
+        save_dirpath="./unittests_temp/",
     )
     shutil.rmtree("./unittests_temp/")
 
