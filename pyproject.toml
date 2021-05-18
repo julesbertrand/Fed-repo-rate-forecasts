@@ -17,3 +17,9 @@ exclude = '''
   | dist
 )/
 '''
+
+[tool.isort]
+profile = black
+line_length = 99
+src_paths = frp, tests
+known_first_party = lib
