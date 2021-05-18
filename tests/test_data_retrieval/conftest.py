@@ -4,7 +4,7 @@ import pytest
 import requests
 import yaml
 
-from lib.config import API_ENDPOINTS
+from frp.config import API_ENDPOINTS
 
 
 @pytest.fixture(autouse=True)

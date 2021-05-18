@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from lib.utils.df_utils import check_columns, merge_df_list_on
+from frp.utils.df_utils import check_columns, merge_df_list_on
 
 
 def test_merge_df_on_list():

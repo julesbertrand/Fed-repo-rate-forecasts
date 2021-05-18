@@ -2,8 +2,8 @@ import shutil
 
 import pytest
 
-from lib.utils.files import get_valid_filename, open_yaml, save_yaml
-from lib.utils.path import create_dir_if_missing
+from frp.utils.files import get_valid_filename, open_yaml, save_yaml
+from frp.utils.path import create_dir_if_missing
 
 
 @pytest.mark.parametrize(

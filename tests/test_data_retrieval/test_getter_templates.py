@@ -3,7 +3,7 @@ import datetime as dt
 import pytest
 import requests
 
-from lib.data_retrieval.getter_templates import MinimalGetter, TemplateGetter
+from frp.data_retrieval.getter_templates import MinimalGetter, TemplateGetter
 
 
 @pytest.mark.parametrize(

@@ -3,7 +3,7 @@ import datetime as dt
 import pandas as pd
 import pytest
 
-from lib.data_retrieval.data_getters import FREDGetter, OECDGetter, USBLSGetter
+from frp.data_retrieval.data_getters import FREDGetter, OECDGetter, USBLSGetter
 
 # TODO: test on data cleaning methods for USBLS and FRED getters
 
