@@ -19,7 +19,7 @@ exclude = '''
 '''
 
 [tool.isort]
-profile = black
+profile = "black"
 line_length = 99
-src_paths = frp, tests
-known_first_party = lib
+src_paths = ["frp", "tests"]
+known_first_party = "lib"

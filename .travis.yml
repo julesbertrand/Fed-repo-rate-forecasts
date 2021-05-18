@@ -14,9 +14,9 @@ before_script:
   - export PYTHONPATH="$(pwd):$PYTHONPATH"
 
 script:
-  # - pylint --exit-zero config lib tests
-  # - pylint config lib tests
-  - pytest -v -rs --cov=lib tests
+  # - pylint --exit-zero config frp tests
+  # - pylint config frp tests
+  - pytest -v -rs --cov=frp tests
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)

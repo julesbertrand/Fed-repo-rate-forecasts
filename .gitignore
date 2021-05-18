@@ -18,3 +18,4 @@ secrets/
 resources/
 perso/
 old/
+*.txt
