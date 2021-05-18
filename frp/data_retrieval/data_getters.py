@@ -11,9 +11,9 @@ import pandas as pd
 import requests
 from loguru import logger
 
-from lib.config import API_ENDPOINTS
-from lib.data_retrieval.getter_templates import MinimalGetter, TemplateGetter
-from lib.utils.df_utils import merge_df_list_on
+from frp.config import API_ENDPOINTS
+from frp.data_retrieval.getter_templates import MinimalGetter, TemplateGetter
+from frp.utils.df_utils import merge_df_list_on
 
 
 class FREDGetter(TemplateGetter):
@@ -406,10 +406,14 @@ class OECDGetter(MinimalGetter):
         return new_date
 
     @staticmethod
-    def _oecd_date_to_datetime_format(date: str) -> dt.date:
+    def _oecd_date_to_datetime_format(date: str, day: int = -1) -> dt.date:
         """Convert oecd date format YYYY-%QQ to dt.datetime"""
         year, quarter = int(date[:4]), int(date[-1])
-        new_date = dt.date(year=year, month=quarter * 3)
+        new_date = pd.to_datetime(f"{year}-{quarter * 3:02}")
+        if day == -1:
+            new_date += pd.offsets.MonthEnd(1)
+        else:
+            new_date.day = day
         return new_date
 
     # pylint: disable=arguments-differ
@@ -508,14 +512,9 @@ and group in two lists (one data, one metadata)
         obs_df = pd.DataFrame(obs_list).transpose()
         obs_df = self._assign_attributes(obs_df=obs_df, attributes=retrieved_attributes)
         obs_df = self._assign_dimensions(obs_df=obs_df, dimensions=retrieved_dimensions)
-        obs_df["date"] = pd.PeriodIndex(obs_df["period"], freq="Q").to_timestamp()
+        obs_df["date"] = obs_df["period"].apply(self._oecd_date_to_datetime_format)
 
-        temp_metadata = obs_df.drop(columns=["period", "date", "value"]).drop_duplicates()
-        temp_metadata_list = temp_metadata.to_dict(orient="records")
-        metadata_list = []
-        for series_info in temp_metadata_list:
-            info_dict = self._get_metadata(series_info)
-            metadata_list.append(info_dict)
+        metadata_list = self._parse_metadata(obs_df)
 
         data = obs_df.pivot_table(
             index=["date"], columns=["subject", "country", "measure"], values=["value"]
@@ -589,9 +588,37 @@ and group in two lists (one data, one metadata)
         attr = attributes_values[int(key)].get(id_or_name)
         return attr
 
+    def _parse_metadata(self, obs_df: pd.DataFrame) -> List[dict]:
+        """Parse metadata from obs df (dimensions and start / end dates)
+
+        Parameters
+        ----------
+        obs_df: pd.DataFrame
+            Dataframe with all retrieved observations
+
+        Returns
+        -------
+        List[dict]
+            List of dict including a combinations of retrieved dimensions and start / end date \
+for each series id
+        """
+        temp_metadata = obs_df.drop(columns=["period", "date", "value"]).drop_duplicates()
+        groups = obs_df.groupby(list(temp_metadata.columns)).groups
+        groups = {
+            key + (obs_df.iloc[val].period.min(), obs_df.iloc[val].period.max())
+            for key, val in groups.items()
+        }
+        temp_metadata_list = pd.DataFrame(
+            groups, columns=list(temp_metadata.columns) + ["start_date", "end_date"]
+        ).to_dict(
+            orient="records"
+        )  # produces list of rows with row as dict
+        metadata_list = list(map(self._get_series_metadata, temp_metadata_list))
+        return metadata_list
+
     @staticmethod
-    def _get_metadata(series_info: dict) -> dict:
-        """Normalize metata retrived from the api in a dict
+    def _get_series_metadata(series_info: dict) -> dict:
+        """Normalize metata retrieved from the api in a dict
 
         Parameters
         ----------
@@ -614,15 +641,15 @@ non-standardized metadata in associated with the key 'other'.
 
         info_dict = {
             "provider": "OECD",
-            "name": "To be implemented",
+            "name": series_id,
             "series_id": series_id,
             "frequency": series_info.get("frequency").lower(),
             "lin_or_pch": None,
             "units": series_info.get("unit").lower(),
             "aggregation_method": None,
             "seasonal_adjustment": seasonal_adjustment,
-            "start_date": "To be Implemented",
-            "end_date": "To be Implemented",
+            "start_date": series_info.get("start_date"),
+            "end_date": series_info.get("end_date"),
             "other": series_info,
         }
         return info_dict

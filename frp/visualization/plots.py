@@ -2,7 +2,7 @@ from typing import Union
 
 import pandas as pd
 
-from lib.visualization.vis_decorator import visualization_grid
+from frp.visualization.vis_decorator import visualization_grid
 
 
 def visualize_features(
@@ -83,8 +83,8 @@ it will take all columns from data except x_col and excl_items.
     return fig
 
 
+# pylint: disable=unused-argument, invalid-name, no-value-for-parameter
 @visualization_grid(pass_ax_or_grid="ax")
-# pylint: disable=unused-argument, invalid-name
 def visualize_features_subplot(
     ax, col_name: str, text_fontsize: int, data: pd.DataFrame, date_col: str = None
 ):
@@ -176,7 +176,6 @@ it will take all columns from data except x_col and excl_items.
 
 
 @visualization_grid(pass_ax_or_grid="ax")
-# pylint: disable=invalid-name
 def seasonality_subplot(
     ax,
     col_name: str,

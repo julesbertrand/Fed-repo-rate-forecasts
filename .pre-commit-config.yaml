@@ -13,16 +13,10 @@ repos:
     hooks:
       - id: black
         args:
-          - '--line-length'
-          - '99'
           - '--check'
   - repo: 'https://github.com/PyCQA/isort'
     rev: 5.8.0
     hooks:
       - id: isort
         args:
-          - '--profile'
-          - 'black'
-          - '--line-length'
-          - '99'
           - '--check'

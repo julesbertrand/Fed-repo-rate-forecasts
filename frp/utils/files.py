@@ -5,7 +5,7 @@ import joblib
 import pandas as pd
 import yaml
 
-from lib.utils.path import normalize_string
+from frp.utils.path import normalize_string
 
 
 def get_valid_filename(filename: str) -> str:

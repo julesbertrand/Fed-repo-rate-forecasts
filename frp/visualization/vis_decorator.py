@@ -1,9 +1,9 @@
-from functools import partial
 from math import ceil
 from typing import Callable, Union
 
 import matplotlib.pyplot as plt
 import pandas as pd
+from decorator import decorator
 from loguru import logger
 
 MAIN_TITLE_FONTSIZE = 18
@@ -12,7 +12,8 @@ LABEL_SIZE_CORR = -2
 SUBPLOT_TITLE_CORR = 4
 
 
-def visualization_grid(pass_ax_or_grid="ax"):
+@decorator
+def visualization_grid(subplot_function, pass_ax_or_grid="ax", *args, **kwargs):
     """Decorator to create a grid for graphs and plot on it.
     Graphs will be printed by the subplot function to which the decorator is applied.
 
@@ -33,16 +34,10 @@ the vertical delimitations of the figure and horiz it's horizontal position.
             f"Argument 'pass_ax_or_grid' invalid value: {pass_ax_or_grid}. \
 Must be one of 'ax' and 'grid'."
         )
-
-    def wrapper(subplot_function):
-        partial_layout = partial(
-            create_layout_and_plot,
-            subplot_function=subplot_function,
-            pass_ax_or_grid=pass_ax_or_grid,
-        )
-        return partial_layout
-
-    return wrapper
+    fig = create_layout_and_plot(
+        subplot_function=subplot_function, pass_ax_or_grid=pass_ax_or_grid, *args, **kwargs
+    )
+    return fig
 
 
 def create_layout_and_plot(

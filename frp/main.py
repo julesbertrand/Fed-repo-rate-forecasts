@@ -1,6 +1,6 @@
-from lib.config import API_KEYS_FILEPATH, API_REQUESTS_PARAMS_FILEPATH, GETTERS
-from lib.data_retrieval.get_data import get_data_from_apis
-from lib.utils.files import open_file
+from frp.config import API_KEYS_FILEPATH, API_REQUESTS_PARAMS_FILEPATH, GETTERS
+from frp.data_retrieval.get_data import get_data_from_apis
+from frp.utils.files import open_file
 
 
 def main():
@@ -14,7 +14,7 @@ def main():
         api_params=api_params,
         data_start_date=data_start_date,
         data_end_date=data_end_date,
-        # providers=["USBLS"],
+        # providers=["OECD"],
         providers=GETTERS,
         save_dirpath="data/raw/",
     )

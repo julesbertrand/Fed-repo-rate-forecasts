@@ -5,12 +5,12 @@ from pathlib import Path
 import pandas as pd
 from loguru import logger
 
-from lib.config import ROOT_PATH
-from lib.data_retrieval.data_getters import FREDGetter, OECDGetter, USBLSGetter
-from lib.utils.df_utils import merge_df_list_on
-from lib.utils.errors import InvalidAPIKey, InvalidAPIRequestsParams
-from lib.utils.files import save_yaml
-from lib.utils.path import create_dir_if_missing
+from frp.config import ROOT_PATH
+from frp.data_retrieval.data_getters import FREDGetter, OECDGetter, USBLSGetter
+from frp.utils.df_utils import merge_df_list_on
+from frp.utils.errors import InvalidAPIKey, InvalidAPIRequestsParams
+from frp.utils.files import save_yaml
+from frp.utils.path import create_dir_if_missing
 
 _GETTERS = {"FRED": FREDGetter, "USBLS": USBLSGetter, "OECD": OECDGetter}
 
