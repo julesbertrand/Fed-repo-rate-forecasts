@@ -84,7 +84,7 @@ patsy==0.5.1
     # via statsmodels
 pep517==0.10.0
     # via pip-tools
-pillow==8.2.0
+pillow==8.3.2
     # via matplotlib
 pip-tools==6.1.0
     # via -r requirements.in
@@ -102,12 +102,12 @@ pyparsing==2.4.7
     # via
     #   matplotlib
     #   packaging
-pytest-cov==2.11.1
-    # via -r requirements.in
 pytest==6.2.2
     # via
     #   -r requirements.in
     #   pytest-cov
+pytest-cov==2.11.1
+    # via -r requirements.in
 python-dateutil==2.8.1
     # via
     #   matplotlib
